@@ -1,13 +1,13 @@
 .PHONY: install-dev lint test build
 
 install-dev:
-python -m pip install -e ".[dev]"
+	python -m pip install -e ".[dev]"
 
 lint:
-python -m ruff check .
+	python -m ruff check .
 
 test:
-python -m pytest
+	python -m pytest
 
 build:
-python -m build
+	python -m build
