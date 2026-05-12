@@ -1,11 +1,11 @@
-# NexusFlow-AI
+# MIFCG-AI
 
 ## Python scaffold
 
 ### Setup
 
 ```bash
-cd /home/runner/work/MIFCG-AI/MIFCG-AI
+# from the project root
 make install-dev
 ```
 
