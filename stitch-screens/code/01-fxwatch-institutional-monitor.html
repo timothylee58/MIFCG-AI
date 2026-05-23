@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FXWatch Institutional Monitor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0a0e1a; color: #e2e8f0; min-height: 100vh; }
+  .header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: #0d1321; border-bottom: 1px solid #1e2d4a; }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 700; color: #38bdf8; }
+  .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, #0ea5e9, #3b82f6); border-radius: 8px; }
+  .header-nav { display: flex; gap: 24px; align-items: center; }
+  .nav-link { color: #94a3b8; font-size: 14px; cursor: pointer; transition: color 0.2s; }
+  .nav-link:hover, .nav-link.active { color: #38bdf8; }
+  .header-actions { display: flex; gap: 12px; align-items: center; }
+  .badge { padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .badge-live { background: #064e3b; color: #34d399; border: 1px solid #065f46; }
+  .badge-alert { background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; }
+  .main { display: grid; grid-template-columns: 280px 1fr; gap: 0; min-height: calc(100vh - 65px); }
+  .sidebar { background: #0d1321; border-right: 1px solid #1e2d4a; padding: 20px 16px; }
+  .sidebar-section { margin-bottom: 28px; }
+  .sidebar-label { font-size: 11px; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .currency-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; transition: background 0.15s; }
+  .currency-item:hover { background: #1e2d4a; }
+  .currency-item.selected { background: #1e3a5f; border: 1px solid #2563eb; }
+  .currency-pair { font-size: 14px; font-weight: 600; color: #e2e8f0; }
+  .currency-rate { font-size: 13px; color: #94a3b8; }
+  .currency-change { font-size: 12px; font-weight: 600; padding: 2px 6px; border-radius: 4px; }
+  .up { color: #34d399; background: #064e3b; }
+  .down { color: #f87171; background: #7f1d1d; }
+  .content { padding: 24px; overflow-y: auto; }
+  .content-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 22px; font-weight: 700; color: #f1f5f9; }
+  .time-filters { display: flex; gap: 6px; }
+  .time-btn { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1px solid #1e2d4a; background: transparent; color: #94a3b8; transition: all 0.15s; }
+  .time-btn.active { background: #1d4ed8; color: white; border-color: #1d4ed8; }
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: #0d1321; border: 1px solid #1e2d4a; border-radius: 12px; padding: 18px; }
+  .stat-label { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+  .stat-value { font-size: 24px; font-weight: 700; color: #f1f5f9; margin-bottom: 4px; }
+  .stat-change { font-size: 13px; display: flex; align-items: center; gap: 4px; }
+  .chart-area { background: #0d1321; border: 1px solid #1e2d4a; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+  .chart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .chart-title { font-size: 16px; font-weight: 600; color: #e2e8f0; }
+  .chart-mock { height: 220px; position: relative; overflow: hidden; }
+  .chart-line { position: absolute; bottom: 0; left: 0; right: 0; top: 0; }
+  svg.chart-svg { width: 100%; height: 100%; }
+  .order-book { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .book-side { background: #0d1321; border: 1px solid #1e2d4a; border-radius: 12px; padding: 16px; }
+  .book-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+  .book-title.bids { color: #34d399; }
+  .book-title.asks { color: #f87171; }
+  .book-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; font-family: 'JetBrains Mono', monospace; position: relative; }
+  .book-row .bar { position: absolute; right: 0; top: 0; bottom: 0; opacity: 0.15; border-radius: 2px; }
+  .book-row.bid .bar { background: #34d399; }
+  .book-row.ask .bar { background: #f87171; }
+  .alerts-panel { background: #0d1321; border: 1px solid #1e2d4a; border-radius: 12px; padding: 16px; }
+  .alert-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #1e2d4a; }
+  .alert-item:last-child { border-bottom: none; }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .alert-dot.critical { background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+  .alert-dot.warning { background: #f59e0b; }
+  .alert-dot.info { background: #38bdf8; }
+  .alert-text { font-size: 13px; color: #cbd5e1; flex: 1; }
+  .alert-time { font-size: 11px; color: #475569; }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon"></div>
+    FXWatch <span style="color:#475569;font-weight:400;font-size:14px;margin-left:4px">Institutional</span>
+  </div>
+  <nav class="header-nav">
+    <span class="nav-link active">Monitor</span>
+    <span class="nav-link">Analytics</span>
+    <span class="nav-link">Orders</span>
+    <span class="nav-link">Risk</span>
+    <span class="nav-link">Reports</span>
+  </nav>
+  <div class="header-actions">
+    <span class="badge badge-live">● LIVE</span>
+    <span class="badge badge-alert">2 Alerts</span>
+    <div style="width:32px;height:32px;border-radius:50%;background:#1e3a5f;display:flex;align-items:center;justify-content:center;font-size:14px;">TL</div>
+  </div>
+</header>
+<div class="main">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Watchlist</div>
+      <div class="currency-item selected">
+        <div><div class="currency-pair">USD/MYR</div><div class="currency-rate">4.7132</div></div>
+        <span class="currency-change up">+0.12%</span>
+      </div>
+      <div class="currency-item">
+        <div><div class="currency-pair">EUR/MYR</div><div class="currency-rate">5.1284</div></div>
+        <span class="currency-change down">-0.08%</span>
+      </div>
+      <div class="currency-item">
+        <div><div class="currency-pair">GBP/MYR</div><div class="currency-rate">5.9847</div></div>
+        <span class="currency-change up">+0.21%</span>
+      </div>
+      <div class="currency-item">
+        <div><div class="currency-pair">SGD/MYR</div><div class="currency-rate">3.5012</div></div>
+        <span class="currency-change up">+0.05%</span>
+      </div>
+      <div class="currency-item">
+        <div><div class="currency-pair">JPY/MYR</div><div class="currency-rate">0.0318</div></div>
+        <span class="currency-change down">-0.34%</span>
+      </div>
+      <div class="currency-item">
+        <div><div class="currency-pair">CNY/MYR</div><div class="currency-rate">0.6489</div></div>
+        <span class="currency-change up">+0.03%</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">BNM Limits</div>
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:#94a3b8">Daily Limit Used</span><span style="color:#f1f5f9">68%</span></div>
+        <div style="height:6px;background:#1e2d4a;border-radius:3px;"><div style="width:68%;height:100%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);border-radius:3px;"></div></div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:#94a3b8">Monthly Exposure</span><span style="color:#f59e0b">84%</span></div>
+        <div style="height:6px;background:#1e2d4a;border-radius:3px;"><div style="width:84%;height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:3px;"></div></div>
+      </div>
+    </div>
+  </aside>
+  <main class="content">
+    <div class="content-header">
+      <div class="page-title">USD/MYR Live Monitor</div>
+      <div class="time-filters">
+        <button class="time-btn">1m</button>
+        <button class="time-btn">5m</button>
+        <button class="time-btn active">15m</button>
+        <button class="time-btn">1H</button>
+        <button class="time-btn">1D</button>
+      </div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Current Rate</div>
+        <div class="stat-value" style="color:#38bdf8">4.7132</div>
+        <div class="stat-change up">▲ +0.0057 (0.12%)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Day High / Low</div>
+        <div class="stat-value">4.7210</div>
+        <div class="stat-change" style="color:#64748b">Low: 4.6988</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Volume (24H)</div>
+        <div class="stat-value">MYR 2.4B</div>
+        <div class="stat-change up">▲ +12.3% vs avg</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Spread (pips)</div>
+        <div class="stat-value">2.8</div>
+        <div class="stat-change" style="color:#34d399">● Tight</div>
+      </div>
+    </div>
+    <div class="chart-area">
+      <div class="chart-header">
+        <div class="chart-title">USD/MYR Price Chart</div>
+        <div style="display:flex;gap:16px;font-size:12px;color:#64748b;">
+          <span style="color:#38bdf8">● Bid</span>
+          <span style="color:#8b5cf6">● Ask</span>
+          <span>● MA(20)</span>
+        </div>
+      </div>
+      <div class="chart-mock">
+        <svg class="chart-svg" viewBox="0 0 800 220">
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,150 L50,140 L100,155 L150,130 L200,125 L250,135 L300,110 L350,100 L400,115 L450,95 L500,80 L550,85 L600,70 L650,65 L700,75 L750,60 L800,55" fill="none" stroke="#38bdf8" stroke-width="2"/>
+          <path d="M0,150 L50,140 L100,155 L150,130 L200,125 L250,135 L300,110 L350,100 L400,115 L450,95 L500,80 L550,85 L600,70 L650,65 L700,75 L750,60 L800,55 L800,220 L0,220Z" fill="url(#g1)"/>
+          <path d="M0,155 L50,148 L100,160 L150,138 L200,130 L250,140 L300,118 L350,108 L400,122 L450,100 L500,87 L550,92 L600,78 L650,72 L700,82 L750,68 L800,62" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4,2"/>
+          <line x1="0" y1="130" x2="800" y2="100" stroke="#475569" stroke-width="1" stroke-dasharray="4,4"/>
+          <line x1="100" y1="0" x2="100" y2="220" stroke="#1e2d4a" stroke-width="1"/>
+          <line x1="300" y1="0" x2="300" y2="220" stroke="#1e2d4a" stroke-width="1"/>
+          <line x1="500" y1="0" x2="500" y2="220" stroke="#1e2d4a" stroke-width="1"/>
+          <line x1="700" y1="0" x2="700" y2="220" stroke="#1e2d4a" stroke-width="1"/>
+          <text x="98" y="215" font-size="11" fill="#475569">09:00</text>
+          <text x="298" y="215" font-size="11" fill="#475569">10:00</text>
+          <text x="498" y="215" font-size="11" fill="#475569">11:00</text>
+          <text x="698" y="215" font-size="11" fill="#475569">12:00</text>
+        </svg>
+      </div>
+    </div>
+    <div class="order-book">
+      <div class="book-side">
+        <div class="book-title bids">Bids (Buy)</div>
+        <div class="book-row bid"><span style="color:#34d399">4.7128</span><span>12,450,000</span><div class="bar" style="width:85%"></div></div>
+        <div class="book-row bid"><span style="color:#34d399">4.7125</span><span>8,200,000</span><div class="bar" style="width:65%"></div></div>
+        <div class="book-row bid"><span style="color:#34d399">4.7120</span><span>15,600,000</span><div class="bar" style="width:100%"></div></div>
+        <div class="book-row bid"><span style="color:#34d399">4.7115</span><span>4,100,000</span><div class="bar" style="width:28%"></div></div>
+        <div class="book-row bid"><span style="color:#34d399">4.7110</span><span>6,800,000</span><div class="bar" style="width:45%"></div></div>
+      </div>
+      <div class="book-side">
+        <div class="book-title asks">Asks (Sell)</div>
+        <div class="book-row ask"><span style="color:#f87171">4.7140</span><span>9,300,000</span><div class="bar" style="width:60%"></div></div>
+        <div class="book-row ask"><span style="color:#f87171">4.7145</span><span>11,700,000</span><div class="bar" style="width:75%"></div></div>
+        <div class="book-row ask"><span style="color:#f87171">4.7150</span><span>15,500,000</span><div class="bar" style="width:100%"></div></div>
+        <div class="book-row ask"><span style="color:#f87171">4.7155</span><span>7,200,000</span><div class="bar" style="width:47%"></div></div>
+        <div class="book-row ask"><span style="color:#f87171">4.7160</span><span>3,900,000</span><div class="bar" style="width:25%"></div></div>
+      </div>
+    </div>
+    <div class="alerts-panel">
+      <div style="font-size:14px;font-weight:600;margin-bottom:12px;">Active Alerts</div>
+      <div class="alert-item">
+        <div class="alert-dot critical"></div>
+        <div class="alert-text">USD/MYR approaching BNM daily limit threshold (4.7200)</div>
+        <div class="alert-time">2m ago</div>
+      </div>
+      <div class="alert-item">
+        <div class="alert-dot warning"></div>
+        <div class="alert-text">Monthly exposure limit at 84% — review required per BNM/GP1/2025</div>
+        <div class="alert-time">15m ago</div>
+      </div>
+      <div class="alert-item">
+        <div class="alert-dot info"></div>
+        <div class="alert-text">EUR/MYR volume spike detected — 340% above 30-day average</div>
+        <div class="alert-time">32m ago</div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
