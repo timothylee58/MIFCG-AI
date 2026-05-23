@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design System | MIFCG-AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0a0e1a; color: #e2e8f0; overflow-x: hidden; }
+  :root {
+    --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --surface3: #1e2a3d;
+    --border: #1e2d45; --accent: #38bdf8; --accent2: #3b82f6;
+    --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6; --pink: #ec4899;
+    --text: #e2e8f0; --text2: #94a3b8; --muted: #64748b;
+  }
+  .topbar { height: 52px; background: #0d1321; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 16px; position: sticky; top: 0; z-index: 10; }
+  .logo { font-weight: 800; font-size: 15px; color: var(--accent); }
+  .topbar-title { font-size: 14px; color: var(--muted); }
+  .topbar-section { font-size: 14px; font-weight: 600; color: var(--text); }
+  .version-badge { background: rgba(56,189,248,0.15); color: var(--accent); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-left: auto; }
+
+  .layout { display: flex; min-height: calc(100vh - 52px); }
+  .sidebar { width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; position: sticky; top: 52px; height: calc(100vh - 52px); overflow-y: auto; flex-shrink: 0; }
+  .sidebar-section { padding: 0 16px; margin-bottom: 4px; }
+  .sidebar-section-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 12px 16px 6px; }
+  .sidebar-link { display: block; padding: 6px 16px; font-size: 12px; color: var(--text2); cursor: pointer; border-radius: 4px; margin: 0 8px; transition: all 0.15s; }
+  .sidebar-link:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-link.active { background: rgba(56,189,248,0.1); color: var(--accent); }
+
+  .content { flex: 1; padding: 32px 40px; max-width: 1100px; }
+  .section { margin-bottom: 48px; }
+  .section-title { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+  .section-desc { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+  .subsection { margin-bottom: 28px; }
+  .subsection-title { font-size: 13px; font-weight: 700; color: var(--text2); margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .divider { height: 1px; background: var(--border); margin: 40px 0; }
+
+  /* Color Swatches */
+  .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
+  .color-swatch { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  .swatch-color { height: 60px; }
+  .swatch-info { padding: 8px; background: var(--surface); }
+  .swatch-name { font-size: 11px; font-weight: 600; color: var(--text); }
+  .swatch-hex { font-size: 10px; color: var(--muted); font-family: monospace; }
+
+  /* Typography */
+  .type-row { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 20px; }
+  .type-meta { min-width: 120px; }
+  .type-label { font-size: 10px; color: var(--muted); font-weight: 700; }
+  .type-spec { font-size: 10px; color: var(--muted); font-family: monospace; }
+
+  /* Buttons */
+  .btn-showcase { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn { padding: 8px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--accent2); color: #fff; }
+  .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-warning { background: var(--yellow); color: #0a0e1a; }
+  .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-accent { background: rgba(56,189,248,0.15); color: var(--accent); border: 1px solid rgba(56,189,248,0.3); }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .btn-lg { padding: 11px 22px; font-size: 15px; }
+  .btn-icon { width: 34px; height: 34px; padding: 0; border-radius: 7px; }
+
+  /* Badges */
+  .badge-showcase { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-success { background: rgba(16,185,129,0.15); color: var(--green); }
+  .badge-warning { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .badge-danger { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-info { background: rgba(56,189,248,0.15); color: var(--accent); }
+  .badge-purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+  .badge-neutral { background: var(--surface2); color: var(--text2); }
+  .badge-outline { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+
+  /* Form Elements */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text2); }
+  .form-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: 13px; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(56,189,248,0.1); }
+  .form-input.error { border-color: var(--red); }
+  .form-input.success { border-color: var(--green); }
+  .form-hint { font-size: 11px; color: var(--muted); }
+  .form-error { font-size: 11px; color: var(--red); }
+  .form-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 9px 12px; font-size: 13px; color: var(--text); outline: none; cursor: pointer; appearance: none; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; }
+  .checkbox-custom { width: 16px; height: 16px; border-radius: 4px; border: 2px solid var(--border); background: var(--surface2); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .checkbox-custom.checked { background: var(--accent2); border-color: var(--accent2); }
+  .toggle { width: 40px; height: 22px; border-radius: 11px; background: var(--surface2); border: 2px solid var(--border); position: relative; cursor: pointer; }
+  .toggle.on { background: var(--accent2); border-color: var(--accent2); }
+  .toggle-knob { width: 14px; height: 14px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; transition: left 0.2s; }
+  .toggle.on .toggle-knob { left: 22px; }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .card-metric { font-size: 28px; font-weight: 800; color: var(--text); }
+  .card-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .card-accent { border-top: 3px solid var(--accent); }
+  .card-success { border-top: 3px solid var(--green); }
+  .card-warning { border-top: 3px solid var(--yellow); }
+  .card-glass { background: rgba(17,24,39,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.06); }
+
+  /* Alerts */
+  .alert { display: flex; gap: 12px; padding: 12px 14px; border-radius: 8px; margin-bottom: 8px; border-left: 4px solid; }
+  .alert-icon { font-size: 16px; flex-shrink: 0; }
+  .alert-body { flex: 1; }
+  .alert-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+  .alert-desc { font-size: 12px; }
+  .alert-success { background: rgba(16,185,129,0.08); border-color: var(--green); }
+  .alert-success .alert-title { color: var(--green); }
+  .alert-success .alert-desc { color: #6ee7b7; }
+  .alert-warning { background: rgba(245,158,11,0.08); border-color: var(--yellow); }
+  .alert-warning .alert-title { color: var(--yellow); }
+  .alert-warning .alert-desc { color: #fcd34d; }
+  .alert-error { background: rgba(239,68,68,0.08); border-color: var(--red); }
+  .alert-error .alert-title { color: var(--red); }
+  .alert-error .alert-desc { color: #fca5a5; }
+  .alert-info { background: rgba(56,189,248,0.08); border-color: var(--accent); }
+  .alert-info .alert-title { color: var(--accent); }
+  .alert-info .alert-desc { color: #7dd3fc; }
+
+  /* Spacing Scale */
+  .spacing-row { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+  .spacing-box { background: var(--accent2); opacity: 0.7; border-radius: 3px; height: 20px; }
+  .spacing-label { font-size: 11px; color: var(--muted); min-width: 40px; font-family: monospace; }
+  .spacing-px { font-size: 11px; color: var(--text2); }
+
+  /* Chart Components */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .chart-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 12px; }
+
+  /* Icon Grid */
+  .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
+  .icon-item { background: var(--surface2); border-radius: 8px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
+  .icon-item:hover { background: var(--surface3); border: 1px solid var(--border); }
+  .icon-item svg { color: var(--accent); }
+  .icon-name { font-size: 9px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">MIFCG-AI</div>
+  <span style="color:var(--muted);">›</span>
+  <div class="topbar-title">Design System</div>
+  <span style="color:var(--muted);">›</span>
+  <div class="topbar-section">Component Library</div>
+  <span class="version-badge">v1.4.0</span>
+</div>
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-section-label">Foundation</div>
+    <a class="sidebar-link active">Colors</a>
+    <a class="sidebar-link">Typography</a>
+    <a class="sidebar-link">Spacing</a>
+    <a class="sidebar-link">Icons</a>
+    <div class="sidebar-section-label">Components</div>
+    <a class="sidebar-link">Buttons</a>
+    <a class="sidebar-link">Badges & Tags</a>
+    <a class="sidebar-link">Form Elements</a>
+    <a class="sidebar-link">Cards</a>
+    <a class="sidebar-link">Alerts</a>
+    <a class="sidebar-link">Charts</a>
+    <div class="sidebar-section-label">Patterns</div>
+    <a class="sidebar-link">Data Tables</a>
+    <a class="sidebar-link">Navigation</a>
+    <a class="sidebar-link">Modals</a>
+    <a class="sidebar-link">Tooltips</a>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <!-- Colors -->
+    <div class="section">
+      <div class="section-title">Color Palette</div>
+      <div class="section-desc">Core design tokens for the MIFCG-AI dark theme interface. All colors maintain WCAG AA contrast standards.</div>
+
+      <div class="subsection">
+        <div class="subsection-title">Background & Surface</div>
+        <div class="color-grid">
+          <div class="color-swatch"><div class="swatch-color" style="background:#0a0e1a;"></div><div class="swatch-info"><div class="swatch-name">Background</div><div class="swatch-hex">#0a0e1a</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#090d18;"></div><div class="swatch-info"><div class="swatch-name">BG Alt</div><div class="swatch-hex">#090d18</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#0d1321;"></div><div class="swatch-info"><div class="swatch-name">BG Raised</div><div class="swatch-hex">#0d1321</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#111827;"></div><div class="swatch-info"><div class="swatch-name">Surface</div><div class="swatch-hex">#111827</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#1a2235;"></div><div class="swatch-info"><div class="swatch-name">Surface 2</div><div class="swatch-hex">#1a2235</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#1e2a3d;"></div><div class="swatch-info"><div class="swatch-name">Surface 3</div><div class="swatch-hex">#1e2a3d</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#1e2d45;"></div><div class="swatch-info"><div class="swatch-name">Border</div><div class="swatch-hex">#1e2d45</div></div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Brand & Accent</div>
+        <div class="color-grid">
+          <div class="color-swatch"><div class="swatch-color" style="background:#38bdf8;"></div><div class="swatch-info"><div class="swatch-name">Accent Sky</div><div class="swatch-hex">#38bdf8</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#3b82f6;"></div><div class="swatch-info"><div class="swatch-name">Accent Blue</div><div class="swatch-hex">#3b82f6</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#2563eb;"></div><div class="swatch-info"><div class="swatch-name">Blue Dark</div><div class="swatch-hex">#2563eb</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#8b5cf6;"></div><div class="swatch-info"><div class="swatch-name">Purple</div><div class="swatch-hex">#8b5cf6</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#ec4899;"></div><div class="swatch-info"><div class="swatch-name">Pink</div><div class="swatch-hex">#ec4899</div></div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Semantic Colors</div>
+        <div class="color-grid">
+          <div class="color-swatch"><div class="swatch-color" style="background:#10b981;"></div><div class="swatch-info"><div class="swatch-name">Success</div><div class="swatch-hex">#10b981</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#34d399;"></div><div class="swatch-info"><div class="swatch-name">Success Lt</div><div class="swatch-hex">#34d399</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#f59e0b;"></div><div class="swatch-info"><div class="swatch-name">Warning</div><div class="swatch-hex">#f59e0b</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#fbbf24;"></div><div class="swatch-info"><div class="swatch-name">Warning Lt</div><div class="swatch-hex">#fbbf24</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#ef4444;"></div><div class="swatch-info"><div class="swatch-name">Danger</div><div class="swatch-hex">#ef4444</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#fca5a5;"></div><div class="swatch-info"><div class="swatch-name">Danger Lt</div><div class="swatch-hex">#fca5a5</div></div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Text Scale</div>
+        <div class="color-grid">
+          <div class="color-swatch"><div class="swatch-color" style="background:#e2e8f0;"></div><div class="swatch-info"><div class="swatch-name">Text Primary</div><div class="swatch-hex">#e2e8f0</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#94a3b8;"></div><div class="swatch-info"><div class="swatch-name">Text 2</div><div class="swatch-hex">#94a3b8</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#64748b;"></div><div class="swatch-info"><div class="swatch-name">Muted</div><div class="swatch-hex">#64748b</div></div></div>
+          <div class="color-swatch"><div class="swatch-color" style="background:#475569;"></div><div class="swatch-info"><div class="swatch-name">Faint</div><div class="swatch-hex">#475569</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Typography -->
+    <div class="section">
+      <div class="section-title">Typography</div>
+      <div class="section-desc">Inter font family. Consistent type scale for hierarchy and readability.</div>
+      <div class="type-row"><div class="type-meta"><div class="type-label">Display / H1</div><div class="type-spec">32px · 800 · -0.02em</div></div><div style="font-size:32px; font-weight:800; letter-spacing:-0.02em;">MIFCG Compliance Gateway</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-label">Heading / H2</div><div class="type-spec">24px · 700 · -0.01em</div></div><div style="font-size:24px; font-weight:700; letter-spacing:-0.01em;">Regulatory Dashboard</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-label">Heading / H3</div><div class="type-spec">18px · 700</div></div><div style="font-size:18px; font-weight:700;">Document Workspace</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-label">Subheading</div><div class="type-spec">15px · 600</div></div><div style="font-size:15px; font-weight:600; color:var(--text2);">AML/CFT Policy Framework 2024</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-label">Body / Default</div><div class="type-spec">13px · 400 · 1.6</div></div><div style="font-size:13px; line-height:1.6; color:var(--text2);">Bank Negara Malaysia regulates all financial institutions under the Financial Services Act 2013. Compliance requirements must be adhered to by all reporting institutions.</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-label">Small / Caption</div><div class="type-spec">11px · 400</div></div><div style="font-size:11px; color:var(--muted);">Last updated: 23 May 2025 · v3.2 · Modified by Ahmad Hafiz</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-label">Label / Overline</div><div class="type-spec">10px · 700 · uppercase</div></div><div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);">Compliance Status · BNM Regulated</div></div>
+      <div class="type-row"><div class="type-meta"><div class="type-label">Mono / Code</div><div class="type-spec">12px · mono</div></div><div style="font-size:12px; font-family:monospace; color:var(--accent);">USD/MYR: 4.4820 · KLCI: 1,624.38</div></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Buttons -->
+    <div class="section">
+      <div class="section-title">Buttons</div>
+      <div class="section-desc">Button variants for primary actions, secondary controls, and contextual interactions.</div>
+      <div class="subsection">
+        <div class="subsection-title">Variants</div>
+        <div class="btn-showcase">
+          <button class="btn btn-primary">Primary Action</button>
+          <button class="btn btn-secondary">Secondary</button>
+          <button class="btn btn-success">✓ Approve</button>
+          <button class="btn btn-danger">✕ Reject</button>
+          <button class="btn btn-warning">⚠ Warning</button>
+          <button class="btn btn-ghost">Ghost</button>
+          <button class="btn btn-accent">AI Analysis</button>
+        </div>
+      </div>
+      <div class="subsection">
+        <div class="subsection-title">Sizes</div>
+        <div class="btn-showcase">
+          <button class="btn btn-primary btn-sm">Small</button>
+          <button class="btn btn-primary">Medium (Default)</button>
+          <button class="btn btn-primary btn-lg">Large</button>
+          <button class="btn btn-secondary btn-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Badges -->
+    <div class="section">
+      <div class="section-title">Badges & Status Tags</div>
+      <div class="section-desc">Status indicators for compliance states, alert levels, and regulatory classifications.</div>
+      <div class="badge-showcase" style="margin-bottom:16px;">
+        <span class="badge badge-success"><span class="badge-dot" style="background:var(--green);"></span>Compliant</span>
+        <span class="badge badge-warning"><span class="badge-dot" style="background:var(--yellow);"></span>Under Review</span>
+        <span class="badge badge-danger"><span class="badge-dot" style="background:var(--red);"></span>Flagged</span>
+        <span class="badge badge-info">BNM</span>
+        <span class="badge badge-purple">SC Malaysia</span>
+        <span class="badge badge-neutral">Pending</span>
+        <span class="badge badge-outline">Draft</span>
+      </div>
+      <div class="badge-showcase">
+        <span class="badge badge-info" style="border-radius:4px;">AML/CFT</span>
+        <span class="badge badge-purple" style="border-radius:4px;">PDPA</span>
+        <span class="badge badge-success" style="border-radius:4px;">FATCA</span>
+        <span class="badge badge-warning" style="border-radius:4px;">CRS</span>
+        <span class="badge badge-danger" style="border-radius:4px;">HIGH RISK</span>
+        <span class="badge badge-neutral" style="border-radius:4px;">KLCI</span>
+        <span class="badge badge-success" style="border-radius:4px;">EPF</span>
+        <span class="badge badge-info" style="border-radius:4px;">SOCSO</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Forms -->
+    <div class="section">
+      <div class="section-title">Form Elements</div>
+      <div class="section-desc">Input fields, selects, checkboxes, and toggles with validation states.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Document Name</label>
+          <input class="form-input" type="text" placeholder="e.g. AML-CFT Policy Framework 2024" value="AML-CFT Policy Framework 2024">
+          <span class="form-hint">Enter the official regulatory document name</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Regulation Type</label>
+          <select class="form-select">
+            <option>BNM — Bank Negara Malaysia</option>
+            <option>SC — Securities Commission</option>
+            <option>Bursa Malaysia</option>
+            <option>PDPA 2010</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reference Number <span style="color:var(--red);">*</span></label>
+          <input class="form-input error" type="text" placeholder="e.g. BNM/RH/PD 028-2" value="BNM/RH/PD 028-">
+          <span class="form-error">Reference number format is invalid</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Effective Date</label>
+          <input class="form-input success" type="date" value="2024-01-01">
+          <span class="form-hint" style="color:var(--green);">✓ Date is valid</span>
+        </div>
+        <div class="form-group" style="flex-direction:row; align-items:center; gap:12px;">
+          <div class="checkbox-row">
+            <div class="checkbox-custom checked">✓</div>
+            <span style="font-size:12px;">BNM Compliant</span>
+          </div>
+          <div class="checkbox-row">
+            <div class="checkbox-custom"></div>
+            <span style="font-size:12px;">SC Compliant</span>
+          </div>
+          <div class="checkbox-row">
+            <div class="checkbox-custom checked">✓</div>
+            <span style="font-size:12px;">PDPA Compliant</span>
+          </div>
+        </div>
+        <div class="form-group" style="flex-direction:row; align-items:center; gap:16px;">
+          <span style="font-size:12px; color:var(--text2);">AI Analysis</span>
+          <div class="toggle on"><div class="toggle-knob"></div></div>
+          <span style="font-size:12px; color:var(--text2);">Auto-Review</span>
+          <div class="toggle"><div class="toggle-knob"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Cards -->
+    <div class="section">
+      <div class="section-title">Cards</div>
+      <div class="section-desc">Metric cards, content containers, and data display panels.</div>
+      <div class="card-grid">
+        <div class="card card-accent">
+          <div class="card-header"><span class="card-title">FX Rate</span><span class="badge badge-info">Live</span></div>
+          <div class="card-metric">4.4820</div>
+          <div class="card-sub" style="color:var(--red);">▼ USD/MYR · -0.23% today</div>
+        </div>
+        <div class="card card-success">
+          <div class="card-header"><span class="card-title">Compliance Score</span><span class="badge badge-success">Good</span></div>
+          <div class="card-metric" style="color:var(--green);">87</div>
+          <div class="card-sub">Out of 100 · BNM + SC combined</div>
+        </div>
+        <div class="card card-warning">
+          <div class="card-header"><span class="card-title">Open Alerts</span><span class="badge badge-warning">Action Needed</span></div>
+          <div class="card-metric" style="color:var(--yellow);">14</div>
+          <div class="card-sub">3 critical · 7 warnings · 4 info</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Monthly Budget</span></div>
+          <div style="font-size:11px; color:var(--muted); margin-bottom:8px;">MYR 4,200 / 5,500</div>
+          <div style="height:6px; background:var(--surface2); border-radius:4px;"><div style="height:100%; width:76%; background:var(--accent2); border-radius:4px;"></div></div>
+          <div class="card-sub" style="margin-top:6px;">76% utilized · MYR 1,300 remaining</div>
+        </div>
+        <div class="card card-glass">
+          <div class="card-header"><span class="card-title">Glass Card</span><span class="badge badge-purple">Premium</span></div>
+          <div class="card-metric" style="color:var(--purple);">KLCI</div>
+          <div class="card-sub">1,624.38 · ▲ +0.45% · Bursa Malaysia</div>
+        </div>
+        <div class="card" style="background:linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); border-color:rgba(139,92,246,0.3);">
+          <div class="card-header"><span class="card-title">Gradient Card</span></div>
+          <div style="font-size:28px; font-weight:800; background:linear-gradient(135deg,var(--accent),var(--purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">AI Ready</div>
+          <div class="card-sub">RegComply AI Engine v2.1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Alerts -->
+    <div class="section">
+      <div class="section-title">Alert Components</div>
+      <div class="section-desc">Notification banners and inline alerts for compliance events and system messages.</div>
+      <div class="alert alert-success"><span class="alert-icon">✅</span><div class="alert-body"><div class="alert-title">Compliance Approved</div><div class="alert-desc">AML/CFT Policy Framework v3.2 has passed all regulatory checks and is approved for submission to BNM.</div></div></div>
+      <div class="alert alert-warning"><span class="alert-icon">⚠️</span><div class="alert-body"><div class="alert-title">Review Required</div><div class="alert-desc">3 clauses in the Digital Banking License Application require update before the May 28 BNM deadline.</div></div></div>
+      <div class="alert alert-error"><span class="alert-icon">🚨</span><div class="alert-body"><div class="alert-title">Critical Compliance Conflict</div><div class="alert-desc">Transaction limit in Section 2 conflicts with BNM Circular Nov 2023. Immediate remediation required to avoid regulatory penalty.</div></div></div>
+      <div class="alert alert-info"><span class="alert-icon">ℹ️</span><div class="alert-body"><div class="alert-title">New Regulation Published</div><div class="alert-desc">SC Malaysia issued updated ESG Disclosure Guidelines (SC/GL/2025-03). AI analysis queued for all affected documents.</div></div></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Spacing Scale -->
+    <div class="section">
+      <div class="section-title">Spacing Scale</div>
+      <div class="section-desc">4px base unit spacing system for consistent layout and padding.</div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div class="spacing-row"><div class="spacing-label">sp-1</div><div class="spacing-box" style="width:4px;"></div><div class="spacing-px">4px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-2</div><div class="spacing-box" style="width:8px;"></div><div class="spacing-px">8px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-3</div><div class="spacing-box" style="width:12px;"></div><div class="spacing-px">12px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-4</div><div class="spacing-box" style="width:16px;"></div><div class="spacing-px">16px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-5</div><div class="spacing-box" style="width:20px;"></div><div class="spacing-px">20px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-6</div><div class="spacing-box" style="width:24px;"></div><div class="spacing-px">24px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-8</div><div class="spacing-box" style="width:32px;"></div><div class="spacing-px">32px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-10</div><div class="spacing-box" style="width:40px;"></div><div class="spacing-px">40px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-12</div><div class="spacing-box" style="width:48px;"></div><div class="spacing-px">48px</div></div>
+        <div class="spacing-row"><div class="spacing-label">sp-16</div><div class="spacing-box" style="width:64px;"></div><div class="spacing-px">64px</div></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Charts -->
+    <div class="section">
+      <div class="section-title">Chart Components</div>
+      <div class="section-desc">SVG-based chart components for financial data visualization.</div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-title">Line Chart — USD/MYR 30 Days</div>
+          <svg width="100%" height="80" viewBox="0 0 260 80">
+            <defs><linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/><stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,55 L20,50 L40,58 L60,45 L80,48 L100,40 L120,42 L140,35 L160,38 L180,30 L200,33 L220,25 L240,28 L260,22 L260,80 L0,80Z" fill="url(#lg1)"/>
+            <polyline points="0,55 20,50 40,58 60,45 80,48 100,40 120,42 140,35 160,38 180,30 200,33 220,25 240,28 260,22" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Bar Chart — Spending by Category</div>
+          <svg width="100%" height="80" viewBox="0 0 260 80">
+            <rect x="10" y="30" width="28" height="45" rx="3" fill="#3b82f6" opacity="0.8"/>
+            <rect x="50" y="45" width="28" height="30" rx="3" fill="#3b82f6" opacity="0.8"/>
+            <rect x="90" y="20" width="28" height="55" rx="3" fill="#38bdf8" opacity="0.9"/>
+            <rect x="130" y="50" width="28" height="25" rx="3" fill="#3b82f6" opacity="0.8"/>
+            <rect x="170" y="38" width="28" height="37" rx="3" fill="#3b82f6" opacity="0.8"/>
+            <rect x="210" y="55" width="28" height="20" rx="3" fill="#3b82f6" opacity="0.8"/>
+            <text x="24" y="78" font-size="7" fill="#64748b" text-anchor="middle">Food</text>
+            <text x="64" y="78" font-size="7" fill="#64748b" text-anchor="middle">Trans</text>
+            <text x="104" y="78" font-size="7" fill="#64748b" text-anchor="middle">Rent</text>
+            <text x="144" y="78" font-size="7" fill="#64748b" text-anchor="middle">Util</text>
+            <text x="184" y="78" font-size="7" fill="#64748b" text-anchor="middle">Shop</text>
+            <text x="224" y="78" font-size="7" fill="#64748b" text-anchor="middle">Health</text>
+          </svg>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Donut Chart — Compliance by Regulator</div>
+          <svg width="100%" height="80" viewBox="0 0 260 80">
+            <circle cx="50" cy="40" r="30" fill="none" stroke="#1a2235" stroke-width="14"/>
+            <circle cx="50" cy="40" r="30" fill="none" stroke="#10b981" stroke-width="14" stroke-dasharray="113 75" stroke-dashoffset="28" transform="rotate(-90 50 40)"/>
+            <circle cx="50" cy="40" r="30" fill="none" stroke="#3b82f6" stroke-width="14" stroke-dasharray="56 132" stroke-dashoffset="-85" transform="rotate(-90 50 40)"/>
+            <circle cx="50" cy="40" r="30" fill="none" stroke="#f59e0b" stroke-width="14" stroke-dasharray="19 169" stroke-dashoffset="-141" transform="rotate(-90 50 40)"/>
+            <text x="110" y="22" font-size="9" fill="#10b981">● BNM — 60%</text>
+            <text x="110" y="36" font-size="9" fill="#3b82f6">● SC — 30%</text>
+            <text x="110" y="50" font-size="9" fill="#f59e0b">● Bursa — 10%</text>
+          </svg>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Heatmap — Factor Grid</div>
+          <svg width="100%" height="80" viewBox="0 0 260 80">
+            <rect x="5" y="5" width="30" height="20" rx="2" fill="#10b981" opacity="0.8"/><text x="20" y="18" font-size="7" fill="#fff" text-anchor="middle">0.82</text>
+            <rect x="40" y="5" width="30" height="20" rx="2" fill="#3b82f6" opacity="0.7"/><text x="55" y="18" font-size="7" fill="#fff" text-anchor="middle">0.61</text>
+            <rect x="75" y="5" width="30" height="20" rx="2" fill="#ef4444" opacity="0.7"/><text x="90" y="18" font-size="7" fill="#fff" text-anchor="middle">-0.34</text>
+            <rect x="110" y="5" width="30" height="20" rx="2" fill="#10b981" opacity="0.5"/><text x="125" y="18" font-size="7" fill="#fff" text-anchor="middle">0.41</text>
+            <rect x="145" y="5" width="30" height="20" rx="2" fill="#f59e0b" opacity="0.7"/><text x="160" y="18" font-size="7" fill="#fff" text-anchor="middle">0.12</text>
+            <rect x="5" y="30" width="30" height="20" rx="2" fill="#3b82f6" opacity="0.5"/><text x="20" y="43" font-size="7" fill="#fff" text-anchor="middle">0.53</text>
+            <rect x="40" y="30" width="30" height="20" rx="2" fill="#ef4444" opacity="0.9"/><text x="55" y="43" font-size="7" fill="#fff" text-anchor="middle">-0.78</text>
+            <rect x="75" y="30" width="30" height="20" rx="2" fill="#10b981" opacity="0.9"/><text x="90" y="43" font-size="7" fill="#fff" text-anchor="middle">0.91</text>
+            <rect x="110" y="30" width="30" height="20" rx="2" fill="#3b82f6" opacity="0.9"/><text x="125" y="43" font-size="7" fill="#fff" text-anchor="middle">0.76</text>
+            <rect x="145" y="30" width="30" height="20" rx="2" fill="#f59e0b" opacity="0.4"/><text x="160" y="43" font-size="7" fill="#fff" text-anchor="middle">0.08</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

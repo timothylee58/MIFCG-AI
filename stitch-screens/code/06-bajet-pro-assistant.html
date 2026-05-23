@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bajet Pro — AI Financial Assistant | MIFCG-AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0a0e1a; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  :root { --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45; --accent: #38bdf8; --accent2: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6; --text: #e2e8f0; --muted: #64748b; }
+
+  .topbar { height: 52px; background: #0d1321; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
+  .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #3b82f6, #10b981); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #fff; }
+  .topbar-title { font-weight: 700; font-size: 15px; }
+  .ai-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(139,92,246,0.4); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: #c4b5fd; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-left: auto; }
+
+  .workspace { display: flex; flex: 1; overflow: hidden; }
+
+  /* Left — Insights Panel */
+  .insights-panel { width: 300px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+  .insights-panel::-webkit-scrollbar { width: 4px; }
+  .insights-panel::-webkit-scrollbar-thumb { background: var(--border); }
+  .panel-section { padding: 16px; border-bottom: 1px solid var(--border); }
+  .panel-section-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
+
+  /* Health Score */
+  .health-card { background: var(--surface2); border-radius: 12px; padding: 16px; text-align: center; position: relative; overflow: hidden; }
+  .health-card::before { content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; background: rgba(59,130,246,0.08); }
+  .health-score { font-size: 40px; font-weight: 900; color: var(--green); line-height: 1; }
+  .health-label { font-size: 12px; color: var(--text); font-weight: 600; margin-top: 4px; }
+  .health-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .health-indicators { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 12px; }
+  .health-ind { background: var(--surface); border-radius: 7px; padding: 7px; text-align: center; }
+  .health-ind .val { font-size: 13px; font-weight: 700; }
+  .health-ind .lbl { font-size: 9px; color: var(--muted); }
+
+  /* Budget Summary */
+  .budget-ring-wrap { display: flex; justify-content: center; margin-bottom: 12px; position: relative; }
+  .budget-ring-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+  .budget-ring-label .val { font-size: 16px; font-weight: 800; color: var(--text); }
+  .budget-ring-label .lbl { font-size: 9px; color: var(--muted); }
+  .budget-categories { display: flex; flex-direction: column; gap: 5px; }
+  .budget-cat { display: flex; align-items: center; gap: 8px; }
+  .cat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .cat-name { font-size: 11px; color: var(--text2); flex: 1; }
+  .cat-pct { font-size: 11px; color: var(--muted); }
+  .cat-bar-wrap { width: 60px; height: 3px; background: var(--surface); border-radius: 3px; }
+  .cat-bar { height: 100%; border-radius: 3px; }
+
+  /* Quick Cards */
+  .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .quick-card { background: var(--surface2); border-radius: 8px; padding: 10px; cursor: pointer; transition: all 0.15s; border: 1px solid transparent; }
+  .quick-card:hover { border-color: var(--accent); }
+  .quick-icon { font-size: 18px; margin-bottom: 4px; }
+  .quick-title { font-size: 11px; font-weight: 600; color: var(--text); }
+  .quick-sub { font-size: 10px; color: var(--muted); }
+
+  /* Savings */
+  .savings-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--surface2); border-radius: 7px; margin-bottom: 5px; }
+  .savings-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .savings-info { flex: 1; }
+  .savings-name { font-size: 11px; font-weight: 600; color: var(--text); }
+  .savings-detail { font-size: 10px; color: var(--muted); }
+  .savings-amount { font-size: 12px; font-weight: 700; color: var(--green); }
+
+  /* Center — Chat */
+  .chat-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .chat-header { padding: 14px 20px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .ai-avatar { width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .ai-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .ai-status { font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 4px; }
+  .chat-actions { margin-left: auto; display: flex; gap: 8px; }
+  .btn { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .msg-row { display: flex; gap: 10px; }
+  .msg-row.user { flex-direction: row-reverse; }
+  .msg-av { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .bubble { padding: 12px 14px; border-radius: 12px; max-width: 460px; font-size: 13px; line-height: 1.7; }
+  .bubble.ai { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-top-left-radius: 3px; }
+  .bubble.user { background: rgba(59,130,246,0.18); border: 1px solid rgba(59,130,246,0.3); color: var(--text); border-top-right-radius: 3px; }
+  .msg-time { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .msg-row.user .msg-time { text-align: right; }
+  .insight-card-inline { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-top: 8px; }
+  .insight-card-title { font-size: 11px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+  .inline-stat-row { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid var(--border); }
+  .inline-stat-row:last-child { border: none; }
+  .inline-stat-key { color: var(--muted); }
+  .inline-stat-val { color: var(--text); font-weight: 600; }
+  .suggestion-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .chip { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.25); color: var(--accent); cursor: pointer; transition: all 0.15s; }
+  .chip:hover { background: rgba(56,189,248,0.2); }
+
+  .chat-input-area { padding: 14px 16px; background: var(--surface); border-top: 1px solid var(--border); }
+  .suggested-prompts { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+  .prompt-chip { padding: 5px 12px; border-radius: 20px; font-size: 11px; background: var(--surface2); border: 1px solid var(--border); color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .prompt-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .input-row { display: flex; gap: 8px; align-items: flex-end; }
+  .chat-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--text); outline: none; resize: none; font-family: inherit; min-height: 44px; }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--muted); }
+  .send-btn { width: 42px; height: 42px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
+
+  /* Right — Spending Chart -->
+  .chart-panel { width: 280px; background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; }
+  .chart-panel::-webkit-scrollbar { width: 4px; }
+  .chart-panel::-webkit-scrollbar-thumb { background: var(--border); }
+  .chart-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .chart-section-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 12px; }
+  .trend-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 11px; }
+  .trend-label { color: var(--text2); }
+  .trend-val { font-weight: 700; }
+  .trend-chg { font-size: 10px; }
+  .goal-item { background: var(--surface2); border-radius: 8px; padding: 10px; margin-bottom: 6px; }
+  .goal-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .goal-name { font-size: 12px; font-weight: 600; color: var(--text); }
+  .goal-pct { font-size: 12px; font-weight: 700; color: var(--accent); }
+  .goal-bar-wrap { height: 5px; background: var(--surface); border-radius: 4px; margin-bottom: 4px; }
+  .goal-bar { height: 100%; border-radius: 4px; }
+  .goal-meta { font-size: 10px; color: var(--muted); }
+  .tip-item { display: flex; gap: 8px; padding: 8px; background: var(--surface2); border-radius: 8px; margin-bottom: 5px; }
+  .tip-icon { font-size: 16px; flex-shrink: 0; }
+  .tip-text { font-size: 11px; color: var(--text2); line-height: 1.5; }
+</style>
+</head>
+<body>
+<!-- Topbar -->
+<div class="topbar">
+  <div class="logo-icon">B</div>
+  <span class="topbar-title">Bajet Pro</span>
+  <span style="color:var(--muted);">›</span>
+  <span style="color:var(--text); font-size:13px;">AI Financial Assistant</span>
+  <span class="ai-badge">✨ Powered by Claude AI</span>
+  <div class="avatar">RZ</div>
+</div>
+
+<div class="workspace">
+  <!-- Left: Insights Panel -->
+  <div class="insights-panel">
+    <!-- Financial Health Score -->
+    <div class="panel-section">
+      <div class="panel-section-title">Financial Health Score</div>
+      <div class="health-card">
+        <div class="health-score">74</div>
+        <div class="health-label">Good Standing</div>
+        <div class="health-sub">Better than 62% of users this month</div>
+        <div class="health-indicators">
+          <div class="health-ind"><div class="val" style="color:var(--green);">A</div><div class="lbl">Savings</div></div>
+          <div class="health-ind"><div class="val" style="color:var(--yellow);">B+</div><div class="lbl">Spending</div></div>
+          <div class="health-ind"><div class="val" style="color:var(--accent);">A-</div><div class="lbl">Goals</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Budget Overview -->
+    <div class="panel-section">
+      <div class="panel-section-title">May 2025 Budget</div>
+      <div class="budget-ring-wrap">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#1a2235" stroke-width="14"/>
+          <!-- Food 28% -->
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#3b82f6" stroke-width="14" stroke-dasharray="84.7 217" stroke-dashoffset="0" transform="rotate(-90 60 60)"/>
+          <!-- Rent 35% -->
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#8b5cf6" stroke-width="14" stroke-dasharray="105.8 196" stroke-dashoffset="-84.7" transform="rotate(-90 60 60)"/>
+          <!-- Transport 12% -->
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#10b981" stroke-width="14" stroke-dasharray="36.3 265" stroke-dashoffset="-190.5" transform="rotate(-90 60 60)"/>
+          <!-- Others 25% -->
+          <circle cx="60" cy="60" r="48" fill="none" stroke="#f59e0b" stroke-width="14" stroke-dasharray="75.7 226" stroke-dashoffset="-226.8" transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="budget-ring-label">
+          <div class="val">MYR</div>
+          <div class="val" style="font-size:14px; font-weight:800; color:var(--text);">4,280</div>
+          <div class="lbl">of 5,500</div>
+        </div>
+      </div>
+      <div class="budget-categories">
+        <div class="budget-cat">
+          <div class="cat-dot" style="background:#3b82f6;"></div>
+          <span class="cat-name">🍜 Food & Dining</span>
+          <span class="cat-pct">28%</span>
+          <div class="cat-bar-wrap"><div class="cat-bar" style="width:100%; background:#3b82f6;"></div></div>
+        </div>
+        <div class="budget-cat">
+          <div class="cat-dot" style="background:#8b5cf6;"></div>
+          <span class="cat-name">🏠 Rent / Housing</span>
+          <span class="cat-pct">35%</span>
+          <div class="cat-bar-wrap"><div class="cat-bar" style="width:100%; background:#8b5cf6;"></div></div>
+        </div>
+        <div class="budget-cat">
+          <div class="cat-dot" style="background:#10b981;"></div>
+          <span class="cat-name">🚗 Transport</span>
+          <span class="cat-pct">12%</span>
+          <div class="cat-bar-wrap"><div class="cat-bar" style="width:43%; background:#10b981;"></div></div>
+        </div>
+        <div class="budget-cat">
+          <div class="cat-dot" style="background:#f59e0b;"></div>
+          <span class="cat-name">📦 Others</span>
+          <span class="cat-pct">25%</span>
+          <div class="cat-bar-wrap"><div class="cat-bar" style="width:89%; background:#f59e0b;"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="panel-section">
+      <div class="panel-section-title">Quick Actions</div>
+      <div class="quick-grid">
+        <div class="quick-card">
+          <div class="quick-icon">📊</div>
+          <div class="quick-title">Spending Report</div>
+          <div class="quick-sub">May 2025</div>
+        </div>
+        <div class="quick-card">
+          <div class="quick-icon">🎯</div>
+          <div class="quick-title">Goal Tracker</div>
+          <div class="quick-sub">3 active goals</div>
+        </div>
+        <div class="quick-card">
+          <div class="quick-icon">💰</div>
+          <div class="quick-title">EPF Calc</div>
+          <div class="quick-sub">Check contributions</div>
+        </div>
+        <div class="quick-card">
+          <div class="quick-icon">📈</div>
+          <div class="quick-title">ASB Dividend</div>
+          <div class="quick-sub">2024: 4.25%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Savings Recommendations -->
+    <div class="panel-section">
+      <div class="panel-section-title">Savings Recommendations</div>
+      <div class="savings-item">
+        <div class="savings-icon" style="background:rgba(59,130,246,0.15);">🏦</div>
+        <div class="savings-info">
+          <div class="savings-name">EPF Voluntary Top-up</div>
+          <div class="savings-detail">Tax relief up to MYR 8,000</div>
+        </div>
+        <div class="savings-amount">+MYR 200</div>
+      </div>
+      <div class="savings-item">
+        <div class="savings-icon" style="background:rgba(16,185,129,0.15);">🌱</div>
+        <div class="savings-info">
+          <div class="savings-name">ASB / Unit Trust</div>
+          <div class="savings-detail">Avg return: 4.25–6.5% p.a.</div>
+        </div>
+        <div class="savings-amount">+MYR 150</div>
+      </div>
+      <div class="savings-item">
+        <div class="savings-icon" style="background:rgba(139,92,246,0.15);">🛡️</div>
+        <div class="savings-info">
+          <div class="savings-name">Takaful / Insurance</div>
+          <div class="savings-detail">Medical card top-up</div>
+        </div>
+        <div class="savings-amount">MYR 120/mo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center: Chat Interface -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <div class="ai-avatar">🤖</div>
+      <div>
+        <div class="ai-name">Bajet AI Assistant</div>
+        <div class="ai-status"><div style="width:6px;height:6px;border-radius:50%;background:var(--green);"></div>Online · Memahami konteks kewangan Malaysia</div>
+      </div>
+      <div class="chat-actions">
+        <button class="btn btn-outline">Clear Chat</button>
+        <button class="btn btn-outline">📥 Export</button>
+      </div>
+    </div>
+
+    <div class="chat-messages">
+      <!-- AI Opening -->
+      <div class="msg-row">
+        <div class="msg-av" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);">🤖</div>
+        <div>
+          <div class="bubble ai">
+            Selamat datang ke Bajet Pro AI Assistant! 👋<br><br>
+            Saya boleh membantu anda dengan:<br>
+            • Analisis perbelanjaan dan bajet bulanan anda<br>
+            • Pelan simpanan (EPF, ASB, KWSP, unit trust)<br>
+            • Kiraan cukai pendapatan dan pelepasan cukai<br>
+            • Nasihat kewangan berdasarkan situasi anda<br><br>
+            Apa yang boleh saya bantu anda hari ini?
+          </div>
+          <div class="msg-time">Bajet AI · 2:00 PM</div>
+          <div class="suggestion-chips">
+            <span class="chip">Analisis bajet bulan ini</span>
+            <span class="chip">Berapa EPF saya perlu?</span>
+            <span class="chip">Cara jimat lebih banyak</span>
+            <span class="chip">Pelan ASB</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- User -->
+      <div class="msg-row user">
+        <div class="msg-av" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">RZ</div>
+        <div>
+          <div class="bubble user">Boleh analisiskan perbelanjaan saya untuk bulan Mei? Rasa macam dah lebih bajet tapi tak pasti kat mana.</div>
+          <div class="msg-time">Razif · 2:14 PM</div>
+        </div>
+      </div>
+
+      <!-- AI Analysis -->
+      <div class="msg-row">
+        <div class="msg-av" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);">🤖</div>
+        <div>
+          <div class="bubble ai">
+            Baiklah! Saya dah analisis transaksi anda untuk Mei 2025 🔍<br><br>
+            Berdasarkan data anda, jumlah perbelanjaan setakat hari ini: <strong style="color:var(--accent);">MYR 4,280</strong> daripada bajet MYR 5,500 — masih dalam had, tapi ada beberapa kawasan yang perlu diberi perhatian:
+            <div class="insight-card-inline">
+              <div class="insight-card-title">📊 Analisis Perbelanjaan — Mei 2025</div>
+              <div class="inline-stat-row"><span class="inline-stat-key">🍜 Makanan & Minuman</span><span class="inline-stat-val" style="color:var(--red);">MYR 1,240 (+24% ↑)</span></div>
+              <div class="inline-stat-row"><span class="inline-stat-key">🏠 Sewa / Utiliti</span><span class="inline-stat-val" style="color:var(--green);">MYR 1,900 (Normal)</span></div>
+              <div class="inline-stat-row"><span class="inline-stat-key">🚗 Pengangkutan (Grab)</span><span class="inline-stat-val" style="color:var(--yellow);">MYR 520 (+12% ↑)</span></div>
+              <div class="inline-stat-row"><span class="inline-stat-key">🛍️ Shopping Online</span><span class="inline-stat-val" style="color:var(--red);">MYR 380 (+45% ↑)</span></div>
+              <div class="inline-stat-row"><span class="inline-stat-key">💊 Kesihatan</span><span class="inline-stat-val">MYR 240 (Normal)</span></div>
+            </div>
+            <br>
+            <strong>⚠️ Penemuan Utama:</strong><br>
+            1. Perbelanjaan <strong>makanan meningkat 24%</strong> — kemungkinan banyak makan di luar / Grab Food<br>
+            2. <strong>Shopping online melonjak 45%</strong> — Shopee/Lazada sales mungkin jadi faktor<br>
+            3. Bajet Grab anda dah 87% habis dengan 8 hari berbaki dalam bulan ini<br><br>
+            Dengan trend semasa, anggaran anda akan habis pada <strong style="color:var(--yellow);">31 Mei</strong> — tepat pada masanya tapi tiada lebihan untuk tabung.
+          </div>
+          <div class="msg-time">Bajet AI · 2:15 PM</div>
+          <div class="suggestion-chips">
+            <span class="chip">Cara kurangkan belanja makanan</span>
+            <span class="chip">Set alert perbelanjaan</span>
+            <span class="chip">Bandingkan dengan bulan lalu</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- User -->
+      <div class="msg-row user">
+        <div class="msg-av" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">RZ</div>
+        <div>
+          <div class="bubble user">Berapa patut saya simpan dalam EPF setiap bulan? Gaji saya MYR 6,500.</div>
+          <div class="msg-time">Razif · 2:18 PM</div>
+        </div>
+      </div>
+
+      <!-- AI EPF Advice -->
+      <div class="msg-row">
+        <div class="msg-av" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);">🤖</div>
+        <div>
+          <div class="bubble ai">
+            Bagus soalan! Mari kira EPF anda berdasarkan gaji <strong>MYR 6,500</strong>: 💰
+            <div class="insight-card-inline">
+              <div class="insight-card-title">🏦 Kiraan EPF — Gaji MYR 6,500</div>
+              <div class="inline-stat-row"><span class="inline-stat-key">Caruman Pekerja (11%)</span><span class="inline-stat-val" style="color:var(--accent);">MYR 715/bulan</span></div>
+              <div class="inline-stat-row"><span class="inline-stat-key">Caruman Majikan (13%)</span><span class="inline-stat-val" style="color:var(--green);">MYR 845/bulan</span></div>
+              <div class="inline-stat-row"><span class="inline-stat-key">Jumlah EPF Bulanan</span><span class="inline-stat-val" style="color:var(--text);">MYR 1,560/bulan</span></div>
+              <div class="inline-stat-row"><span class="inline-stat-key">Jumlah Setahun</span><span class="inline-stat-val">MYR 18,720/tahun</span></div>
+              <div class="inline-stat-row"><span class="inline-stat-key">Dividen 2024 (5.5%)</span><span class="inline-stat-val" style="color:var(--green);">~MYR 1,030/tahun</span></div>
+            </div>
+            <br>
+            <strong>💡 Tips Tambahan:</strong><br>
+            • Tambah voluntary contribution untuk pelepasan cukai sehingga MYR 4,000 tambahan<br>
+            • Pada gaji MYR 6,500, anda layak simpan di <strong>ASB</strong> (Amanah Saham Bumiputera) dengan dividen ~4.25%<br>
+            • SOCSO anda: MYR 27.90/bulan (dilindungi sehingga gaji MYR 5,000 untuk caruman)
+          </div>
+          <div class="msg-time">Bajet AI · 2:19 PM</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input-area">
+      <div class="suggested-prompts">
+        <span class="prompt-chip">💰 Semak baki ASB saya</span>
+        <span class="prompt-chip">📋 Kiraan cukai pendapatan</span>
+        <span class="prompt-chip">🎯 Plan simpanan rumah</span>
+        <span class="prompt-chip">📊 Trend 3 bulan</span>
+      </div>
+      <div class="input-row">
+        <textarea class="chat-input" placeholder="Tanya Bajet AI tentang kewangan anda... (e.g. 'Macam mana nak jimat untuk beli rumah?')" rows="2"></textarea>
+        <button class="send-btn">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Spending Chart Panel -->
+  <div class="chart-panel">
+    <div class="chart-section">
+      <div class="chart-section-title">Spending Trend — 6 Months</div>
+      <svg width="100%" height="100" viewBox="0 0 248 100">
+        <defs>
+          <linearGradient id="spGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,70 L40,60 L80,75 L120,50 L160,45 L200,55 L248,40 L248,100 L0,100Z" fill="url(#spGrad)"/>
+        <polyline points="0,70 40,60 80,75 120,50 160,45 200,55 248,40" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="248" cy="40" r="4" fill="#38bdf8"/>
+        <text x="4" y="96" font-size="8" fill="#64748b">Dec</text>
+        <text x="36" y="96" font-size="8" fill="#64748b">Jan</text>
+        <text x="76" y="96" font-size="8" fill="#64748b">Feb</text>
+        <text x="116" y="96" font-size="8" fill="#64748b">Mar</text>
+        <text x="156" y="96" font-size="8" fill="#64748b">Apr</text>
+        <text x="196" y="96" font-size="8" fill="#64748b">May</text>
+      </svg>
+      <div class="trend-row"><span class="trend-label">December 2024</span><span class="trend-val">MYR 4,820</span></div>
+      <div class="trend-row"><span class="trend-label">January 2025</span><span class="trend-val">MYR 4,650</span></div>
+      <div class="trend-row"><span class="trend-label">February 2025</span><span class="trend-val">MYR 4,910</span></div>
+      <div class="trend-row"><span class="trend-label">March 2025</span><span class="trend-val">MYR 4,380</span></div>
+      <div class="trend-row"><span class="trend-label">April 2025</span><span class="trend-val">MYR 4,210</span></div>
+      <div class="trend-row"><span class="trend-label"><strong>May 2025 (MTD)</strong></span><span class="trend-val" style="color:var(--accent);"><strong>MYR 4,280</strong></span><span class="trend-chg" style="color:var(--green);">+1.7%</span></div>
+    </div>
+
+    <div class="chart-section">
+      <div class="chart-section-title">Savings Goals</div>
+      <div class="goal-item">
+        <div class="goal-top">
+          <span class="goal-name">🏠 Rumah (Down Payment)</span>
+          <span class="goal-pct">34%</span>
+        </div>
+        <div class="goal-bar-wrap"><div class="goal-bar" style="width:34%; background:var(--accent2);"></div></div>
+        <div class="goal-meta">MYR 17,000 / MYR 50,000 · Target: Dec 2026</div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-top">
+          <span class="goal-name">✈️ Cuti Keluarga Japan</span>
+          <span class="goal-pct">68%</span>
+        </div>
+        <div class="goal-bar-wrap"><div class="goal-bar" style="width:68%; background:var(--green);"></div></div>
+        <div class="goal-meta">MYR 6,800 / MYR 10,000 · Target: Aug 2025</div>
+      </div>
+      <div class="goal-item">
+        <div class="goal-top">
+          <span class="goal-name">🚨 Tabung Kecemasan</span>
+          <span class="goal-pct">52%</span>
+        </div>
+        <div class="goal-bar-wrap"><div class="goal-bar" style="width:52%; background:var(--yellow);"></div></div>
+        <div class="goal-meta">MYR 10,400 / MYR 20,000 · 6mo expenses</div>
+      </div>
+    </div>
+
+    <div class="chart-section">
+      <div class="chart-section-title">AI Financial Tips</div>
+      <div class="tip-item">
+        <span class="tip-icon">💡</span>
+        <span class="tip-text">Kurangkan makan luar 2x seminggu boleh jimat ~MYR 320 sebulan</span>
+      </div>
+      <div class="tip-item">
+        <span class="tip-icon">📈</span>
+        <span class="tip-text">Dividen ASB 2024: 4.25% — pertimbangkan top-up sebelum 31 Dis</span>
+      </div>
+      <div class="tip-item">
+        <span class="tip-icon">🎯</span>
+        <span class="tip-text">Savings rate anda 22% — Sasarkan 30% untuk financial freedom</span>
+      </div>
+      <div class="tip-item">
+        <span class="tip-icon">🧾</span>
+        <span class="tip-text">Pelepasan cukai pendidikan sehingga MYR 7,000 — pastikan resit simpan</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
