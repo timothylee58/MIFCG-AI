@@ -1,0 +1,25 @@
+app            = "mifcg-api"
+primary_region = "sin"        # Singapore — closest to Malaysia
+
+[build]
+
+[env]
+  ENVIRONMENT = "production"
+  PORT        = "8000"
+
+[http_service]
+  internal_port       = 8000
+  force_https         = true
+  auto_stop_machines  = false   # keep alive — free tier allows 1 always-on machine
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type       = "requests"
+    hard_limit = 200
+    soft_limit = 150
+
+[[vm]]
+  cpu_kind   = "shared"
+  cpus       = 1
+  memory_mb  = 256             # free tier limit
