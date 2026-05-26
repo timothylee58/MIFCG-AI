@@ -43,7 +43,7 @@ jobs:
 
   # ─────────────────────────────────────────
   frontend-lint-typecheck:
-    name: Frontend — lint + type-check
+    name: Frontend — lint + type-check + build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -67,6 +67,8 @@ jobs:
       - name: Type-check
         run: npm run type-check
 
+      # Standard Next.js build validates the app compiles correctly.
+      # The Cloudflare-specific build (build:cf) runs only on deploy.
       - name: Build
         run: npm run build
         env:
@@ -76,7 +78,7 @@ jobs:
 
   # ─────────────────────────────────────────
   deploy-backend:
-    name: Deploy backend → Fly.io
+    name: Deploy backend → Koyeb
     needs: [backend-lint-test, frontend-lint-typecheck]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -84,17 +86,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy
-        working-directory: backend
-        run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      # Koyeb watches the GitHub repo directly (configured in dashboard).
+      # This step forces a redeploy via the Koyeb API as a CI-gated trigger,
+      # ensuring deployment only happens after tests pass.
+      - name: Trigger Koyeb redeploy
+        run: |
+          curl -sf -X POST "https://app.koyeb.com/v1/services/${{ secrets.KOYEB_SERVICE_ID }}/redeploy" \
+            -H "Authorization: Bearer ${{ secrets.KOYEB_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{}' | jq .
 
   # ─────────────────────────────────────────
   deploy-frontend:
-    name: Deploy frontend → Netlify
+    name: Deploy frontend → Cloudflare Pages
     needs: [backend-lint-test, frontend-lint-typecheck]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -114,13 +118,18 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      # netlify deploy --build runs netlify.toml build command + @netlify/plugin-nextjs
-      # which correctly packages SSR routes as Netlify Functions
-      - name: Deploy to Netlify
-        run: npx netlify-cli deploy --build --prod
+      # @opennextjs/cloudflare compiles Next.js App Router to Cloudflare Workers.
+      # With nodejs_compat in wrangler.toml, all Node.js built-ins are available —
+      # no per-route `export const runtime = 'edge'` needed.
+      - name: Build for Cloudflare (OpenNext)
+        run: npm run build:cf
         env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
+      - name: Deploy to Cloudflare Pages
+        run: npx wrangler pages deploy .open-next/assets --project-name=mifcg-frontend --commit-dirty=true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
