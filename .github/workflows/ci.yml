@@ -67,8 +67,6 @@ jobs:
       - name: Type-check
         run: npm run type-check
 
-      # Standard Next.js build validates the app compiles correctly.
-      # The Cloudflare-specific build (build:cf) runs only on deploy.
       - name: Build
         run: npm run build
         env:
@@ -78,7 +76,7 @@ jobs:
 
   # ─────────────────────────────────────────
   deploy-backend:
-    name: Deploy backend → Koyeb
+    name: Deploy backend → Railway
     needs: [backend-lint-test, frontend-lint-typecheck]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -86,50 +84,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Koyeb watches the GitHub repo directly (configured in dashboard).
-      # This step forces a redeploy via the Koyeb API as a CI-gated trigger,
-      # ensuring deployment only happens after tests pass.
-      - name: Trigger Koyeb redeploy
-        run: |
-          curl -sf -X POST "https://app.koyeb.com/v1/services/${{ secrets.KOYEB_SERVICE_ID }}/redeploy" \
-            -H "Authorization: Bearer ${{ secrets.KOYEB_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d '{}' | jq .
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy
+        working-directory: backend
+        run: railway up --service mifcg-api --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
   # ─────────────────────────────────────────
   deploy-frontend:
-    name: Deploy frontend → Cloudflare Pages
+    name: Deploy frontend → Railway
     needs: [backend-lint-test, frontend-lint-typecheck]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
 
-      - name: Install deps
-        run: npm ci
-
-      # @opennextjs/cloudflare compiles Next.js App Router to Cloudflare Workers.
-      # With nodejs_compat in wrangler.toml, all Node.js built-ins are available —
-      # no per-route `export const runtime = 'edge'` needed.
-      - name: Build for Cloudflare (OpenNext)
-        run: npm run build:cf
+      - name: Deploy
+        working-directory: frontend
+        run: railway up --service mifcg-frontend --detach
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-
-      - name: Deploy to Cloudflare Pages
-        run: npx wrangler pages deploy .open-next/assets --project-name=mifcg-frontend --commit-dirty=true
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

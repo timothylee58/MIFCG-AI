@@ -15,15 +15,9 @@ htmlcov/
 # Node
 node_modules/
 .next/
-.open-next/
 .turbo/
 out/
 build/
-
-# Cloudflare / Wrangler
-.wrangler/
-.dev.vars
-!.dev.vars.example
 
 # Env files
 .env
