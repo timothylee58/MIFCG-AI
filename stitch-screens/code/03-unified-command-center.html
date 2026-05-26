@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified Command Center | MIFCG-AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0a0e1a; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  :root { --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45; --accent: #38bdf8; --accent2: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6; --text: #e2e8f0; --muted: #64748b; }
+
+  .topbar { height: 52px; background: #0d1321; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: var(--accent); }
+  .live-badge { display: flex; align-items: center; gap: 5px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 700; color: #ef4444; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .topbar-time { font-size: 13px; color: var(--muted); margin-left: auto; }
+  .topbar-date { font-size: 13px; color: var(--text); font-weight: 500; }
+  .btn { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; }
+  .btn-primary { background: var(--accent2); color: #fff; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+  /* Ticker Bar */
+  .ticker-bar { height: 32px; background: #090d18; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0; overflow: hidden; }
+  .ticker-label { background: var(--accent2); color: #fff; padding: 0 12px; height: 100%; display: flex; align-items: center; font-size: 10px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+  .ticker-items { display: flex; gap: 0; align-items: center; padding: 0 16px; gap: 24px; }
+  .ticker-item { display: flex; align-items: center; gap: 6px; font-size: 11px; white-space: nowrap; }
+  .ticker-pair { color: var(--muted); font-weight: 600; }
+  .ticker-rate { color: var(--text); font-weight: 700; }
+  .ticker-chg.up { color: var(--green); }
+  .ticker-chg.dn { color: var(--red); }
+
+  /* Main Grid */
+  .main { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto auto; gap: 1px; background: var(--border); overflow: hidden; }
+  .panel { background: var(--surface); padding: 16px; overflow: hidden; }
+  .panel-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .panel-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .panel-action { font-size: 11px; color: var(--accent); cursor: pointer; }
+
+  /* FX Panel */
+  .fx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .fx-card { background: var(--surface2); border-radius: 8px; padding: 10px; }
+  .fx-pair { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+  .fx-rate { font-size: 18px; font-weight: 800; color: var(--text); }
+  .fx-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+  .fx-chg { font-size: 11px; font-weight: 600; }
+  .fx-chg.up { color: var(--green); }
+  .fx-chg.dn { color: var(--red); }
+  .fx-sparkline { margin-top: 6px; }
+
+  /* Alert Panel */
+  .alert-list { display: flex; flex-direction: column; gap: 6px; }
+  .alert-item { display: flex; gap: 10px; padding: 8px 10px; border-radius: 7px; border-left: 3px solid; align-items: flex-start; }
+  .alert-item.critical { background: rgba(239,68,68,0.08); border-color: var(--red); }
+  .alert-item.warning { background: rgba(245,158,11,0.08); border-color: var(--yellow); }
+  .alert-item.info { background: rgba(56,189,248,0.08); border-color: var(--accent); }
+  .alert-icon { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
+  .alert-text { flex: 1; }
+  .alert-msg { font-size: 12px; color: var(--text); font-weight: 500; line-height: 1.4; }
+  .alert-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .alert-time { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+
+  /* Module Status */
+  .module-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .module-card { background: var(--surface2); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 4px; }
+  .module-name { font-size: 11px; font-weight: 600; color: var(--text); }
+  .module-sub { font-size: 10px; color: var(--muted); }
+  .module-status { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .module-metric { font-size: 13px; font-weight: 700; color: var(--accent); }
+
+  /* Compliance Panel */
+  .compliance-overview { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+  .comp-stat { background: var(--surface2); border-radius: 8px; padding: 10px; text-align: center; }
+  .comp-stat .val { font-size: 22px; font-weight: 800; margin-bottom: 2px; }
+  .comp-stat .lbl { font-size: 10px; color: var(--muted); }
+  .progress-row { margin-bottom: 8px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+  .progress-label span:first-child { color: var(--text); }
+  .progress-label span:last-child { color: var(--muted); }
+  .progress-bar-bg { height: 5px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; border-radius: 4px; }
+
+  /* System Health */
+  .health-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .health-item { background: var(--surface2); border-radius: 8px; padding: 10px; }
+  .health-item-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .health-label { font-size: 11px; color: var(--muted); }
+  .health-val { font-size: 14px; font-weight: 700; color: var(--text); }
+  .mini-bar { height: 4px; border-radius: 4px; background: var(--surface); overflow: hidden; }
+  .mini-bar-fill { height: 100%; border-radius: 4px; }
+
+  /* Calendar */
+  .cal-list { display: flex; flex-direction: column; gap: 6px; }
+  .cal-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px; background: var(--surface2); border-radius: 7px; }
+  .cal-date { text-align: center; min-width: 36px; }
+  .cal-day { font-size: 18px; font-weight: 800; color: var(--accent); line-height: 1; }
+  .cal-mon { font-size: 9px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+  .cal-info { flex: 1; }
+  .cal-title { font-size: 12px; font-weight: 500; color: var(--text); }
+  .cal-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+  .cal-badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-top: 3px; display: inline-block; }
+  .cal-badge.bnm { background: rgba(59,130,246,0.2); color: #60a5fa; }
+  .cal-badge.sc { background: rgba(139,92,246,0.2); color: #a78bfa; }
+  .cal-badge.bursa { background: rgba(16,185,129,0.2); color: #34d399; }
+
+  /* Activity Feed */
+  .activity-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 200px; }
+  .activity-list::-webkit-scrollbar { width: 3px; }
+  .activity-list::-webkit-scrollbar-thumb { background: var(--border); }
+  .activity-item { display: flex; gap: 8px; align-items: flex-start; }
+  .activity-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+  .activity-content { flex: 1; }
+  .activity-text { font-size: 11px; color: var(--text); line-height: 1.5; }
+  .activity-text strong { color: var(--accent); }
+  .activity-time { font-size: 10px; color: var(--muted); }
+
+  /* Metrics Row */
+  .metrics-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border); grid-column: 1 / -1; }
+  .metric-card { background: var(--surface); padding: 14px 16px; }
+  .metric-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .metric-value { font-size: 24px; font-weight: 800; color: var(--text); }
+  .metric-change { display: flex; align-items: center; gap: 4px; font-size: 11px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<!-- Topbar -->
+<div class="topbar">
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    MIFCG-AI
+  </div>
+  <span style="color:var(--muted); font-size:13px;">Unified Command Center</span>
+  <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+  <div class="topbar-time" style="margin-left:auto;">Friday, 23 May 2025</div>
+  <div style="width:1px; height:20px; background:var(--border); margin:0 8px;"></div>
+  <div class="topbar-date">14:37:22 MYT</div>
+  <button class="btn btn-primary" style="margin-left:12px;">⚙ Config</button>
+  <div class="avatar">AH</div>
+</div>
+
+<!-- Ticker Bar -->
+<div class="ticker-bar">
+  <div class="ticker-label">FX LIVE</div>
+  <div class="ticker-items">
+    <div class="ticker-item"><span class="ticker-pair">USD/MYR</span><span class="ticker-rate">4.4820</span><span class="ticker-chg dn">▼ 0.23%</span></div>
+    <div class="ticker-item"><span class="ticker-pair">EUR/MYR</span><span class="ticker-rate">4.8650</span><span class="ticker-chg up">▲ 0.11%</span></div>
+    <div class="ticker-item"><span class="ticker-pair">GBP/MYR</span><span class="ticker-rate">5.6720</span><span class="ticker-chg up">▲ 0.08%</span></div>
+    <div class="ticker-item"><span class="ticker-pair">SGD/MYR</span><span class="ticker-rate">3.3210</span><span class="ticker-chg dn">▼ 0.04%</span></div>
+    <div class="ticker-item"><span class="ticker-pair">JPY/MYR</span><span class="ticker-rate">0.02981</span><span class="ticker-chg up">▲ 0.31%</span></div>
+    <div class="ticker-item"><span class="ticker-pair">CNY/MYR</span><span class="ticker-rate">0.6183</span><span class="ticker-chg dn">▼ 0.07%</span></div>
+    <div class="ticker-item"><span class="ticker-pair">KLCI</span><span class="ticker-rate">1,624.38</span><span class="ticker-chg up">▲ 0.45%</span></div>
+    <div class="ticker-item"><span class="ticker-pair">OPR</span><span class="ticker-rate">3.00%</span><span class="ticker-chg" style="color:var(--muted);">Unchanged</span></div>
+  </div>
+</div>
+
+<!-- Key Metrics Row -->
+<div style="display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--border); flex-shrink:0;">
+  <div class="metric-card">
+    <div class="metric-label">Compliance Score</div>
+    <div class="metric-value" style="color:var(--green);">87<span style="font-size:14px;">/100</span></div>
+    <div class="metric-change" style="color:var(--green);">▲ +3 from last month</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Open Alerts</div>
+    <div class="metric-value" style="color:var(--yellow);">14</div>
+    <div class="metric-change" style="color:var(--red);">▲ +4 since yesterday</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">Docs Under Review</div>
+    <div class="metric-value">8</div>
+    <div class="metric-change" style="color:var(--muted);">3 critical pending</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">FX Pairs Monitored</div>
+    <div class="metric-value" style="color:var(--accent);">24</div>
+    <div class="metric-change" style="color:var(--green);">▲ 3 alerts active</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-label">System Uptime</div>
+    <div class="metric-value" style="color:var(--green);">99.8<span style="font-size:14px;">%</span></div>
+    <div class="metric-change" style="color:var(--muted);">30d avg · All systems OK</div>
+  </div>
+</div>
+
+<!-- Main Grid -->
+<div class="main">
+  <!-- FX Rates Panel -->
+  <div class="panel" style="grid-row:1; grid-column:1;">
+    <div class="panel-hd">
+      <span class="panel-title">🌐 FX Watch — Live Rates</span>
+      <span class="panel-action">View All →</span>
+    </div>
+    <div class="fx-grid">
+      <div class="fx-card">
+        <div class="fx-pair">USD / MYR</div>
+        <div class="fx-rate">4.4820</div>
+        <div class="fx-meta"><span class="fx-chg dn">▼ -0.0103 (-0.23%)</span></div>
+        <div class="fx-sparkline">
+          <svg width="100%" height="28" viewBox="0 0 120 28">
+            <polyline points="0,20 15,18 30,22 45,16 60,14 75,17 90,12 105,15 120,13" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="fx-card">
+        <div class="fx-pair">EUR / MYR</div>
+        <div class="fx-rate">4.8650</div>
+        <div class="fx-meta"><span class="fx-chg up">▲ +0.0054 (+0.11%)</span></div>
+        <div class="fx-sparkline">
+          <svg width="100%" height="28" viewBox="0 0 120 28">
+            <polyline points="0,22 15,20 30,18 45,21 60,17 75,15 90,16 105,13 120,12" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="fx-card">
+        <div class="fx-pair">GBP / MYR</div>
+        <div class="fx-rate">5.6720</div>
+        <div class="fx-meta"><span class="fx-chg up">▲ +0.0045 (+0.08%)</span></div>
+        <div class="fx-sparkline">
+          <svg width="100%" height="28" viewBox="0 0 120 28">
+            <polyline points="0,18 15,20 30,17 45,19 60,15 75,14 90,16 105,13 120,12" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+      <div class="fx-card">
+        <div class="fx-pair">SGD / MYR</div>
+        <div class="fx-rate">3.3210</div>
+        <div class="fx-meta"><span class="fx-chg dn">▼ -0.0013 (-0.04%)</span></div>
+        <div class="fx-sparkline">
+          <svg width="100%" height="28" viewBox="0 0 120 28">
+            <polyline points="0,14 15,16 30,15 45,17 60,16 75,18 90,17 105,18 120,19" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts Panel -->
+  <div class="panel" style="grid-row:1; grid-column:2;">
+    <div class="panel-hd">
+      <span class="panel-title">🔔 System Alerts</span>
+      <span style="background:rgba(239,68,68,0.15); color:var(--red); font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px;">14 Active</span>
+    </div>
+    <div class="alert-list">
+      <div class="alert-item critical">
+        <span class="alert-icon">🚨</span>
+        <div class="alert-text">
+          <div class="alert-msg">AML Transaction Limit — Policy Conflict Detected</div>
+          <div class="alert-sub">AML-CFT Policy v3.2 · BNM Circular Nov 2023 · MYR threshold mismatch</div>
+        </div>
+        <span class="alert-time">9m ago</span>
+      </div>
+      <div class="alert-item critical">
+        <span class="alert-icon">🚨</span>
+        <div class="alert-text">
+          <div class="alert-msg">USD/MYR approaching alert threshold 4.50</div>
+          <div class="alert-sub">FXWatch · Current: 4.4820 · Threshold: 4.50 · Distance: 0.018</div>
+        </div>
+        <span class="alert-time">23m ago</span>
+      </div>
+      <div class="alert-item warning">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-text">
+          <div class="alert-msg">Digital Banking License doc flagged for review</div>
+          <div class="alert-sub">RegComply AI · Document flagged · 3 sections require update</div>
+        </div>
+        <span class="alert-time">1h ago</span>
+      </div>
+      <div class="alert-item warning">
+        <span class="alert-icon">⚠️</span>
+        <div class="alert-text">
+          <div class="alert-msg">BNM OPR Decision — May 2025 results pending</div>
+          <div class="alert-sub">Regulatory Calendar · Meeting: 22 May 2025 · Announcement TBA</div>
+        </div>
+        <span class="alert-time">2h ago</span>
+      </div>
+      <div class="alert-item info">
+        <span class="alert-icon">ℹ️</span>
+        <div class="alert-text">
+          <div class="alert-msg">SC Malaysia issued updated ESG disclosure guidelines</div>
+          <div class="alert-sub">RegComply AI · New circular SC/GL/2025-03 · Review required</div>
+        </div>
+        <span class="alert-time">4h ago</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module Status -->
+  <div class="panel" style="grid-row:1; grid-column:3;">
+    <div class="panel-hd">
+      <span class="panel-title">⚡ Module Status</span>
+      <span style="color:var(--green); font-size:10px; font-weight:700;">5/6 Online</span>
+    </div>
+    <div class="module-grid">
+      <div class="module-card">
+        <div class="module-name">FXWatch Live</div>
+        <div class="module-sub">Currency Monitor</div>
+        <div class="module-status"><div class="status-dot" style="background:var(--green);"></div><span style="color:var(--green);">Online</span></div>
+        <div class="module-metric">24 pairs</div>
+      </div>
+      <div class="module-card">
+        <div class="module-name">RegComply AI</div>
+        <div class="module-sub">Doc Workspace</div>
+        <div class="module-status"><div class="status-dot" style="background:var(--green);"></div><span style="color:var(--green);">Online</span></div>
+        <div class="module-metric">8 active</div>
+      </div>
+      <div class="module-card">
+        <div class="module-name">Bursa Factor</div>
+        <div class="module-sub">Analytics</div>
+        <div class="module-status"><div class="status-dot" style="background:var(--green);"></div><span style="color:var(--green);">Online</span></div>
+        <div class="module-metric">KLCI 1,624</div>
+      </div>
+      <div class="module-card">
+        <div class="module-name">Bajet Pro</div>
+        <div class="module-sub">Budget App</div>
+        <div class="module-status"><div class="status-dot" style="background:var(--green);"></div><span style="color:var(--green);">Online</span></div>
+        <div class="module-metric">2.4k users</div>
+      </div>
+      <div class="module-card">
+        <div class="module-name">AI Assistant</div>
+        <div class="module-sub">Claude Engine</div>
+        <div class="module-status"><div class="status-dot" style="background:var(--green);"></div><span style="color:var(--green);">Online</span></div>
+        <div class="module-metric">142 req/min</div>
+      </div>
+      <div class="module-card">
+        <div class="module-name">Data Pipeline</div>
+        <div class="module-sub">ETL Service</div>
+        <div class="module-status"><div class="status-dot" style="background:var(--yellow);"></div><span style="color:var(--yellow);">Degraded</span></div>
+        <div class="module-metric">78% perf.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compliance Overview -->
+  <div class="panel" style="grid-row:2; grid-column:1;">
+    <div class="panel-hd">
+      <span class="panel-title">📋 Compliance Status</span>
+      <span class="panel-action">Details →</span>
+    </div>
+    <div class="compliance-overview">
+      <div class="comp-stat"><div class="val" style="color:var(--green);">18</div><div class="lbl">Compliant</div></div>
+      <div class="comp-stat"><div class="val" style="color:var(--yellow);">6</div><div class="lbl">Pending</div></div>
+      <div class="comp-stat"><div class="val" style="color:var(--red);">3</div><div class="lbl">Critical</div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>BNM Compliance</span><span>92%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:92%; background:var(--green);"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>SC Malaysia</span><span>84%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:84%; background:var(--accent);"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>Bursa Malaysia</span><span>96%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:96%; background:var(--green);"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>PDPA 2010</span><span>78%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:78%; background:var(--yellow);"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-label"><span>FATCA / CRS</span><span>88%</span></div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:88%; background:var(--accent);"></div></div>
+    </div>
+  </div>
+
+  <!-- System Health -->
+  <div class="panel" style="grid-row:2; grid-column:2;">
+    <div class="panel-hd">
+      <span class="panel-title">💻 System Health</span>
+      <span style="color:var(--green); font-size:11px; font-weight:700;">All Normal</span>
+    </div>
+    <div class="health-grid">
+      <div class="health-item">
+        <div class="health-item-top"><span class="health-label">CPU Usage</span><span class="health-val">34%</span></div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:34%; background:var(--green);"></div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-top"><span class="health-label">Memory</span><span class="health-val">61%</span></div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:61%; background:var(--yellow);"></div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-top"><span class="health-label">DB Latency</span><span class="health-val">12ms</span></div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:12%; background:var(--green);"></div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-top"><span class="health-label">API p99</span><span class="health-val">148ms</span></div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:30%; background:var(--green);"></div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-top"><span class="health-label">Storage</span><span class="health-val">42%</span></div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:42%; background:var(--green);"></div></div>
+      </div>
+      <div class="health-item">
+        <div class="health-item-top"><span class="health-label">AI Queue</span><span class="health-val">6 jobs</span></div>
+        <div class="mini-bar"><div class="mini-bar-fill" style="width:20%; background:var(--accent);"></div></div>
+      </div>
+    </div>
+    <div style="margin-top:10px; padding:8px; background:var(--surface2); border-radius:7px;">
+      <svg width="100%" height="36" viewBox="0 0 280 36">
+        <polyline points="0,28 25,26 50,22 75,20 100,24 125,18 150,16 175,20 200,14 225,12 250,16 280,13" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+        <text x="4" y="34" font-size="8" fill="var(--muted)">API Req/s — 30min window</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Regulatory Calendar -->
+  <div class="panel" style="grid-row:2; grid-column:3;">
+    <div class="panel-hd">
+      <span class="panel-title">📅 Regulatory Calendar</span>
+      <span class="panel-action">Full Calendar →</span>
+    </div>
+    <div class="cal-list">
+      <div class="cal-item">
+        <div class="cal-date"><div class="cal-day">28</div><div class="cal-mon">May</div></div>
+        <div class="cal-info">
+          <div class="cal-title">BNM — AML/CFT Policy Circular Effective Date</div>
+          <div class="cal-sub">Compliance teams must complete internal policy updates</div>
+          <span class="cal-badge bnm">BNM</span>
+        </div>
+      </div>
+      <div class="cal-item">
+        <div class="cal-date"><div class="cal-day">30</div><div class="cal-mon">May</div></div>
+        <div class="cal-info">
+          <div class="cal-title">SC Malaysia — ESG Disclosure Guideline Compliance</div>
+          <div class="cal-sub">PLCs and fund managers Q1 2025 ESG report submission</div>
+          <span class="cal-badge sc">SC</span>
+        </div>
+      </div>
+      <div class="cal-item">
+        <div class="cal-date"><div class="cal-day">05</div><div class="cal-mon">Jun</div></div>
+        <div class="cal-info">
+          <div class="cal-title">Bursa Malaysia — Annual Audited Financial Statements</div>
+          <div class="cal-sub">Listed companies FY2024 financial reports deadline</div>
+          <span class="cal-badge bursa">Bursa</span>
+        </div>
+      </div>
+      <div class="cal-item">
+        <div class="cal-date"><div class="cal-day">18</div><div class="cal-mon">Jun</div></div>
+        <div class="cal-info">
+          <div class="cal-title">BNM MPC Meeting — OPR Decision</div>
+          <div class="cal-sub">Monetary Policy Committee Q2 rate decision</div>
+          <span class="cal-badge bnm">BNM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Feed -->
+  <div class="panel" style="grid-row:3; grid-column:1 / -1;">
+    <div class="panel-hd">
+      <span class="panel-title">📊 Activity Feed</span>
+      <span class="panel-action">View All →</span>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+      <div>
+        <div style="font-size:10px; color:var(--muted); font-weight:700; margin-bottom:8px; text-transform:uppercase;">Recent Actions</div>
+        <div class="activity-list">
+          <div class="activity-item"><div class="activity-avatar" style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);">AH</div><div class="activity-content"><div class="activity-text"><strong>Ahmad Hafiz</strong> submitted AML-CFT Policy v3.2 for legal review</div><div class="activity-time">9 minutes ago</div></div></div>
+          <div class="activity-item"><div class="activity-avatar" style="background:linear-gradient(135deg,#10b981,#3b82f6);">SR</div><div class="activity-content"><div class="activity-text"><strong>Siti Rahayu</strong> approved FATCA/CRS Report Q1 2025</div><div class="activity-time">42 minutes ago</div></div></div>
+          <div class="activity-item"><div class="activity-avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444);">MN</div><div class="activity-content"><div class="activity-text"><strong>AI Engine</strong> flagged 2 critical issues in Digital Banking Application</div><div class="activity-time">1 hour ago</div></div></div>
+          <div class="activity-item"><div class="activity-avatar" style="background:linear-gradient(135deg,#8b5cf6,#3b82f6);">FX</div><div class="activity-content"><div class="activity-text"><strong>FXWatch</strong> triggered alert — USD/MYR approaching 4.50 threshold</div><div class="activity-time">23 minutes ago</div></div></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px; color:var(--muted); font-weight:700; margin-bottom:8px; text-transform:uppercase;">AI Analysis Queue</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:var(--surface2); border-radius:6px;">
+            <span style="font-size:11px;">AML-CFT Policy Framework</span>
+            <span style="font-size:10px; color:var(--yellow); font-weight:700;">Analyzing…</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:var(--surface2); border-radius:6px;">
+            <span style="font-size:11px;">Investment Management Manual</span>
+            <span style="font-size:10px; color:var(--muted);">Queued #2</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:var(--surface2); border-radius:6px;">
+            <span style="font-size:11px;">Consumer Protection Framework</span>
+            <span style="font-size:10px; color:var(--muted);">Queued #3</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:var(--surface2); border-radius:6px;">
+            <span style="font-size:11px;">PDPA Data Protection Policy</span>
+            <span style="font-size:10px; color:var(--muted);">Queued #4</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px; color:var(--muted); font-weight:700; margin-bottom:8px; text-transform:uppercase;">FX Active Alerts</div>
+        <div style="display:flex; flex-direction:column; gap:5px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:rgba(239,68,68,0.08); border-radius:6px; border-left:2px solid var(--red);">
+            <span style="font-size:11px;">USD/MYR &gt; 4.50</span>
+            <span style="font-size:10px; color:var(--red); font-weight:700;">NEAR</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:var(--surface2); border-radius:6px;">
+            <span style="font-size:11px;">EUR/MYR &lt; 4.70</span>
+            <span style="font-size:10px; color:var(--muted);">Active</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px; background:var(--surface2); border-radius:6px;">
+            <span style="font-size:11px;">JPY/MYR volatility &gt; 0.5%</span>
+            <span style="font-size:10px; color:var(--green); font-weight:700;">Triggered</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

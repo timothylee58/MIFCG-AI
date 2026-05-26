@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bajet Pro Mobile — Analytics | MIFCG-AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0d1321; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 24px; }
+  :root { --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45; --accent: #38bdf8; --accent2: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6; --text: #e2e8f0; --muted: #64748b; }
+
+  .phone-frame { width: 390px; min-height: 844px; background: #0a0e1a; border-radius: 44px; overflow: hidden; box-shadow: 0 0 0 10px #1a1a2e, 0 0 0 12px #222, 0 30px 80px rgba(0,0,0,0.7); display: flex; flex-direction: column; }
+  .phone-notch { height: 44px; background: #0a0e1a; display: flex; align-items: center; justify-content: space-between; padding: 12px 24px 0; flex-shrink: 0; }
+  .notch-time { font-size: 15px; font-weight: 700; color: var(--text); }
+  .notch-icons { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--text); }
+  .phone-content { flex: 1; overflow-y: auto; }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* Header */
+  .page-header { background: linear-gradient(180deg, #0d1f3c 0%, #0a0e1a 100%); padding: 12px 20px 16px; }
+  .page-title { font-size: 22px; font-weight: 800; color: var(--text); }
+  .page-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .tab-row { display: flex; gap: 4px; margin-top: 12px; background: var(--surface2); border-radius: 12px; padding: 4px; }
+  .tab-item { flex: 1; text-align: center; padding: 7px; font-size: 12px; font-weight: 600; color: var(--muted); border-radius: 8px; cursor: pointer; }
+  .tab-item.active { background: var(--accent2); color: #fff; }
+
+  /* Section */
+  .section { margin: 0 16px 16px; }
+  .section-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .section-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .section-sub { font-size: 11px; color: var(--muted); }
+
+  /* Chart Card */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+
+  /* Mom Comparison -->
+  .mom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mom-card { background: var(--surface2); border-radius: 12px; padding: 12px; }
+  .mom-month { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .mom-amount { font-size: 18px; font-weight: 800; color: var(--text); margin: 4px 0; }
+  .mom-change { font-size: 11px; font-weight: 600; }
+  .mom-bar-wrap { height: 4px; border-radius: 4px; background: var(--surface); margin-top: 8px; }
+  .mom-bar { height: 100%; border-radius: 4px; }
+
+  /* Pie section */
+  .pie-section { display: flex; gap: 12px; align-items: center; }
+  .pie-legend { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+  .pie-legend-row { display: flex; align-items: center; gap: 8px; }
+  .pie-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .pie-name { font-size: 11px; color: var(--text2); flex: 1; }
+  .pie-pct { font-size: 11px; font-weight: 700; color: var(--text); }
+
+  /* Spending Trend Bars -->
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 100px; padding: 0 4px; }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar-col { width: 100%; border-radius: 5px 5px 0 0; min-height: 4px; transition: height 0.3s; }
+  .bar-label { font-size: 9px; color: var(--muted); }
+
+  /* Goal Cards -->
+  .goal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin-bottom: 8px; }
+  .goal-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .goal-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .goal-pct-badge { background: rgba(56,189,248,0.12); color: var(--accent); padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; }
+  .goal-progress-bar { height: 7px; background: var(--surface2); border-radius: 7px; overflow: hidden; margin-bottom: 6px; }
+  .goal-progress-fill { height: 100%; border-radius: 7px; }
+  .goal-meta-row { display: flex; justify-content: space-between; font-size: 11px; }
+  .goal-saved { color: var(--text2); font-weight: 600; }
+  .goal-target { color: var(--muted); }
+  .goal-deadline { color: var(--accent); }
+
+  /* Savings Rate -->
+  .savings-rate-card { background: linear-gradient(135deg, #0d1f3c, #1a2235); border: 1px solid var(--border); border-radius: 16px; padding: 16px; }
+  .sr-row { display: flex; align-items: center; gap: 12px; }
+  .sr-ring { flex-shrink: 0; }
+  .sr-info { flex: 1; }
+  .sr-title { font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .sr-value { font-size: 32px; font-weight: 900; color: var(--text); }
+  .sr-sub { font-size: 11px; color: var(--muted); }
+  .sr-target { font-size: 11px; color: var(--yellow); margin-top: 4px; }
+  .sr-breakdown { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .sr-item { text-align: center; }
+  .sr-item-val { font-size: 14px; font-weight: 800; }
+  .sr-item-lbl { font-size: 10px; color: var(--muted); }
+
+  /* Tips -->
+  .tip-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; }
+  .tip-icon { font-size: 20px; flex-shrink: 0; }
+  .tip-content { flex: 1; }
+  .tip-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .tip-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
+  .tip-action { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 4px; }
+
+  /* Bottom Nav -->
+  .bottom-nav { height: 72px; background: #0d1321; border-top: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-around; padding: 10px 8px 0; flex-shrink: 0; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex: 1; }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="phone-notch">
+    <div class="notch-time">14:37</div>
+    <div class="notch-icons"><span>●●●●</span><span>WiFi</span><span>🔋 87%</span></div>
+  </div>
+
+  <div class="phone-content">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="page-title">📊 Analitik</div>
+      <div class="page-sub">Analisis perbelanjaan & simpanan anda</div>
+      <div class="tab-row">
+        <div class="tab-item">Mingguan</div>
+        <div class="tab-item active">Bulanan</div>
+        <div class="tab-item">Tahunan</div>
+      </div>
+    </div>
+
+    <!-- Spending Trend Chart -->
+    <div class="section">
+      <div class="section-hd">
+        <div>
+          <div class="section-title">Trend Perbelanjaan — 6 Bulan</div>
+          <div class="section-sub">Berbanding dengan purata</div>
+        </div>
+        <div style="font-size:11px; color:var(--accent);">▲ Chart →</div>
+      </div>
+      <div class="chart-card">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:11px; color:var(--muted);">
+          <span>MYR 4,210 — terendah Apr</span>
+          <span style="color:var(--text);">Max: MYR 4,910</span>
+        </div>
+        <div class="bar-chart">
+          <div class="bar-group">
+            <div style="font-size:9px; color:var(--muted); margin-bottom:4px;">MYR4.8k</div>
+            <div class="bar-col" style="height:78%; background:var(--surface2);"></div>
+            <span class="bar-label">Des</span>
+          </div>
+          <div class="bar-group">
+            <div style="font-size:9px; color:var(--muted); margin-bottom:4px;">MYR4.6k</div>
+            <div class="bar-col" style="height:72%; background:var(--surface2);"></div>
+            <span class="bar-label">Jan</span>
+          </div>
+          <div class="bar-group">
+            <div style="font-size:9px; color:var(--muted); margin-bottom:4px;">MYR4.9k</div>
+            <div class="bar-col" style="height:86%; background:var(--surface2);"></div>
+            <span class="bar-label">Feb</span>
+          </div>
+          <div class="bar-group">
+            <div style="font-size:9px; color:var(--muted); margin-bottom:4px;">MYR4.4k</div>
+            <div class="bar-col" style="height:68%; background:var(--surface2);"></div>
+            <span class="bar-label">Mac</span>
+          </div>
+          <div class="bar-group">
+            <div style="font-size:9px; color:var(--muted); margin-bottom:4px;">MYR4.2k</div>
+            <div class="bar-col" style="height:62%; background:var(--surface2);"></div>
+            <span class="bar-label">Apr</span>
+          </div>
+          <div class="bar-group">
+            <div style="font-size:9px; color:var(--muted); margin-bottom:4px;">MYR4.3k</div>
+            <div class="bar-col" style="height:65%; background:linear-gradient(180deg,#3b82f6,#38bdf8); box-shadow:0 0 10px rgba(59,130,246,0.4);"></div>
+            <span class="bar-label" style="color:var(--accent);">Mei ✦</span>
+          </div>
+        </div>
+        <div style="display:flex; gap:16px; margin-top:8px; font-size:11px;">
+          <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--surface2);"></div><span style="color:var(--muted);">Bulan Lalu</span></div>
+          <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px;height:10px;border-radius:2px;background:var(--accent2);"></div><span style="color:var(--muted);">Bulan Ini</span></div>
+          <div style="display:flex; align-items:center; gap:4px;"><div style="width:10px;height:2px;background:var(--yellow);margin-top:4px;"></div><span style="color:var(--muted);">Purata</span></div>
+        </div>
+        <!-- Average line hint -->
+        <svg width="100%" height="4" viewBox="0 0 300 4" style="margin-top:4px; opacity:0.5;">
+          <line x1="0" y1="2" x2="300" y2="2" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,4"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Month over Month Comparison -->
+    <div class="section">
+      <div class="section-hd">
+        <div class="section-title">Perbandingan Bulan ke Bulan</div>
+      </div>
+      <div class="mom-grid">
+        <div class="mom-card">
+          <div class="mom-month">April 2025</div>
+          <div class="mom-amount">MYR 4,210</div>
+          <div class="mom-change" style="color:var(--green);">✓ Terendah 6 bulan</div>
+          <div class="mom-bar-wrap"><div class="mom-bar" style="width:76%; background:var(--surface);"></div></div>
+        </div>
+        <div class="mom-card" style="border:1px solid rgba(56,189,248,0.2);">
+          <div class="mom-month">Mei 2025 (MTD)</div>
+          <div class="mom-amount" style="color:var(--accent);">MYR 4,280</div>
+          <div class="mom-change" style="color:var(--yellow);">▲ +MYR 70 (+1.7%)</div>
+          <div class="mom-bar-wrap"><div class="mom-bar" style="width:78%; background:var(--accent2);"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Pie Chart -->
+    <div class="section">
+      <div class="section-hd">
+        <div class="section-title">Pecahan Kategori — Mei</div>
+        <div class="section-sub">5 kategori utama</div>
+      </div>
+      <div class="chart-card">
+        <div class="pie-section">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <!-- Rent 35% -->
+            <circle cx="55" cy="55" r="44" fill="none" stroke="#8b5cf6" stroke-width="18" stroke-dasharray="96.7 180" stroke-dashoffset="0" transform="rotate(-90 55 55)"/>
+            <!-- Food 29% -->
+            <circle cx="55" cy="55" r="44" fill="none" stroke="#3b82f6" stroke-width="18" stroke-dasharray="80.1 197" stroke-dashoffset="-96.7" transform="rotate(-90 55 55)"/>
+            <!-- Transport 12% -->
+            <circle cx="55" cy="55" r="44" fill="none" stroke="#10b981" stroke-width="18" stroke-dasharray="33.2 244" stroke-dashoffset="-176.8" transform="rotate(-90 55 55)"/>
+            <!-- Shopping 9% -->
+            <circle cx="55" cy="55" r="44" fill="none" stroke="#f59e0b" stroke-width="18" stroke-dasharray="24.9 252" stroke-dashoffset="-210" transform="rotate(-90 55 55)"/>
+            <!-- Others 15% -->
+            <circle cx="55" cy="55" r="44" fill="none" stroke="#ef4444" stroke-width="18" stroke-dasharray="41.5 236" stroke-dashoffset="-234.9" transform="rotate(-90 55 55)"/>
+            <text x="55" y="50" text-anchor="middle" font-size="11" font-weight="800" fill="#e2e8f0">MYR</text>
+            <text x="55" y="64" text-anchor="middle" font-size="11" font-weight="800" fill="#e2e8f0">4,280</text>
+          </svg>
+          <div class="pie-legend">
+            <div class="pie-legend-row"><div class="pie-dot" style="background:#8b5cf6;"></div><span class="pie-name">Sewa</span><span class="pie-pct">35%</span></div>
+            <div class="pie-legend-row"><div class="pie-dot" style="background:#3b82f6;"></div><span class="pie-name">Makanan</span><span class="pie-pct">29%</span></div>
+            <div class="pie-legend-row"><div class="pie-dot" style="background:#10b981;"></div><span class="pie-name">Transport</span><span class="pie-pct">12%</span></div>
+            <div class="pie-legend-row"><div class="pie-dot" style="background:#f59e0b;"></div><span class="pie-name">Shopping</span><span class="pie-pct">9%</span></div>
+            <div class="pie-legend-row"><div class="pie-dot" style="background:#ef4444;"></div><span class="pie-name">Lain-lain</span><span class="pie-pct">15%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Savings Rate -->
+    <div class="section">
+      <div class="section-hd"><div class="section-title">Kadar Simpanan</div></div>
+      <div class="savings-rate-card">
+        <div class="sr-row">
+          <svg class="sr-ring" width="80" height="80" viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#1a2235" stroke-width="10"/>
+            <circle cx="40" cy="40" r="32" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="133" stroke-dashoffset="100" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+            <text x="40" y="44" text-anchor="middle" font-size="14" font-weight="900" fill="#10b981">22%</text>
+          </svg>
+          <div class="sr-info">
+            <div class="sr-title">Savings Rate</div>
+            <div class="sr-value" style="color:var(--green);">22<span style="font-size:16px;">%</span></div>
+            <div class="sr-sub">MYR 1,505 / MYR 6,785 bersih</div>
+            <div class="sr-target">⚠ Sasaran: 30% — Tambah MYR 545/bln</div>
+          </div>
+        </div>
+        <div class="sr-breakdown">
+          <div class="sr-item"><div class="sr-item-val" style="color:var(--accent);">MYR 715</div><div class="sr-item-lbl">EPF</div></div>
+          <div class="sr-item"><div class="sr-item-val" style="color:var(--green);">MYR 500</div><div class="sr-item-lbl">ASB</div></div>
+          <div class="sr-item"><div class="sr-item-val" style="color:var(--purple);">MYR 290</div><div class="sr-item-lbl">Cash</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal Progress -->
+    <div class="section">
+      <div class="section-hd"><div class="section-title">Kemajuan Goals</div><span style="font-size:12px; color:var(--accent);">Semua →</span></div>
+      <div class="goal-card">
+        <div class="goal-top">
+          <span class="goal-name">🏠 Wang Muka Rumah</span>
+          <span class="goal-pct-badge">34%</span>
+        </div>
+        <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:34%; background:var(--accent2);"></div></div>
+        <div class="goal-meta-row">
+          <span class="goal-saved">MYR 17,000 disimpan</span>
+          <span class="goal-target">Sasaran: MYR 50,000</span>
+          <span class="goal-deadline">Des 2026</span>
+        </div>
+      </div>
+      <div class="goal-card">
+        <div class="goal-top">
+          <span class="goal-name">✈️ Percutian Japan</span>
+          <span class="goal-pct-badge" style="background:rgba(16,185,129,0.12); color:var(--green);">68%</span>
+        </div>
+        <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:68%; background:var(--green);"></div></div>
+        <div class="goal-meta-row">
+          <span class="goal-saved">MYR 6,800</span>
+          <span class="goal-target">Sasaran: MYR 10,000</span>
+          <span class="goal-deadline" style="color:var(--green);">Ogos 2025</span>
+        </div>
+      </div>
+      <div class="goal-card">
+        <div class="goal-top">
+          <span class="goal-name">🚨 Tabung Kecemasan</span>
+          <span class="goal-pct-badge" style="background:rgba(245,158,11,0.12); color:var(--yellow);">52%</span>
+        </div>
+        <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:52%; background:var(--yellow);"></div></div>
+        <div class="goal-meta-row">
+          <span class="goal-saved">MYR 10,400</span>
+          <span class="goal-target">Sasaran: MYR 20,000</span>
+          <span class="goal-deadline" style="color:var(--muted);">6 bulan gaji</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Financial Tips -->
+    <div class="section">
+      <div class="section-hd"><div class="section-title">💡 Tips Kewangan AI</div></div>
+      <div class="tip-card">
+        <span class="tip-icon">🍜</span>
+        <div class="tip-content">
+          <div class="tip-title">Kurangkan Makan Luar 2x Seminggu</div>
+          <div class="tip-desc">Perbelanjaan makanan anda naik 24% bulan ini. Masak sendiri boleh jimat ~MYR 320/bulan.</div>
+          <div class="tip-action">Lihat resepi jimat →</div>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="tip-icon">📈</span>
+        <div class="tip-content">
+          <div class="tip-title">ASB Top-Up Sebelum 31 Disember</div>
+          <div class="tip-desc">Dividen ASB 2024 ialah 4.25%. Tambah MYR 500 untuk mendapat dividen penuh tahun ini.</div>
+          <div class="tip-action">Buka ASB sekarang →</div>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="tip-icon">🧾</span>
+        <div class="tip-content">
+          <div class="tip-title">Simpan Resit untuk Pelepasan Cukai</div>
+          <div class="tip-desc">Pelepasan pendidikan, perubatan & lifestyle sehingga MYR 14,600 layak untuk rebat cukai.</div>
+          <div class="tip-action">Scan resit sekarang →</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Utama</span>
+    </div>
+    <div class="nav-item active">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label" style="color:var(--accent);">Analitik</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">💳</span>
+      <span class="nav-label">Transaksi</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🎯</span>
+      <span class="nav-label">Goals</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Profil</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

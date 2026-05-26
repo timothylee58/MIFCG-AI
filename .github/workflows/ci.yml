@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─────────────────────────────────────────
+  backend-lint-test:
+    name: Backend — lint + test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install deps
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint (ruff)
+        run: ruff check app/
+
+      - name: Type-check (mypy)
+        run: mypy app/ --ignore-missing-imports
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+        env:
+          SUPABASE_URL: "https://placeholder.supabase.co"
+          SUPABASE_SERVICE_KEY: "placeholder"
+          REDIS_URL: "redis://localhost:6379/0"
+          ANTHROPIC_API_KEY: "sk-ant-placeholder"
+          ENVIRONMENT: "test"
+
+  # ─────────────────────────────────────────
+  frontend-lint-typecheck:
+    name: Frontend — lint + type-check + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
+          NEXT_PUBLIC_API_URL: "http://localhost:8000"
+
+  # ─────────────────────────────────────────
+  deploy-backend:
+    name: Deploy backend → Railway
+    needs: [backend-lint-test, frontend-lint-typecheck]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy
+        working-directory: backend
+        run: railway up --service mifcg-api --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  # ─────────────────────────────────────────
+  deploy-frontend:
+    name: Deploy frontend → Railway
+    needs: [backend-lint-test, frontend-lint-typecheck]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy
+        working-directory: frontend
+        run: railway up --service mifcg-frontend --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

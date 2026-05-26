@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1440">
+<title>Bursa Factor — Interactive Analytics</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e1a; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; display: flex; }
+
+  /* Sidebar */
+  .sidebar { width: 220px; background: #0d1220; border-right: 1px solid #1e2d4a; display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; }
+  .logo { padding: 0 20px 24px; font-size: 15px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px; }
+  .logo span { color: #64748b; font-weight: 400; }
+  .nav-section { padding: 8px 0; }
+  .nav-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #475569; padding: 6px 20px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; font-size: 13px; color: #94a3b8; cursor: pointer; border-left: 3px solid transparent; }
+  .nav-item:hover { background: #111827; color: #cbd5e1; }
+  .nav-item.active { background: #0f1f38; color: #38bdf8; border-left-color: #38bdf8; }
+  .nav-icon { width: 16px; height: 16px; opacity: 0.7; }
+  .active .nav-icon { opacity: 1; }
+
+  /* Main */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: #0d1220; border-bottom: 1px solid #1e2d4a; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; }
+  .page-title { font-size: 17px; font-weight: 600; color: #f1f5f9; }
+  .topbar-right { display: flex; align-items: center; gap: 14px; }
+  .date-badge { background: #111827; border: 1px solid #1e2d4a; border-radius: 6px; padding: 5px 12px; font-size: 12px; color: #64748b; }
+  .btn { border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+  .btn-primary { background: #38bdf8; color: #0a0e1a; }
+  .btn-outline { background: transparent; border: 1px solid #1e2d4a; color: #94a3b8; }
+
+  .content { flex: 1; padding: 24px 28px; overflow-y: auto; display: grid; gap: 20px; }
+
+  /* KPI Bar */
+  .kpi-bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .kpi-card { background: #0d1220; border: 1px solid #1e2d4a; border-radius: 10px; padding: 16px 18px; }
+  .kpi-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-value { font-size: 22px; font-weight: 700; color: #f1f5f9; }
+  .kpi-delta { font-size: 11px; margin-top: 4px; }
+  .delta-up { color: #22c55e; }
+  .delta-down { color: #ef4444; }
+
+  /* Factor Grid */
+  .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .card { background: #0d1220; border: 1px solid #1e2d4a; border-radius: 10px; padding: 20px; }
+  .card-title { font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .card-subtitle { font-size: 11px; color: #475569; margin-left: 8px; }
+
+  /* Factor Bars */
+  .factor-list { display: flex; flex-direction: column; gap: 10px; }
+  .factor-row { display: flex; align-items: center; gap: 10px; }
+  .factor-name { font-size: 12px; color: #94a3b8; width: 90px; flex-shrink: 0; }
+  .factor-bar-bg { flex: 1; height: 8px; background: #1e2d4a; border-radius: 4px; overflow: hidden; }
+  .factor-bar { height: 100%; border-radius: 4px; }
+  .factor-val { font-size: 12px; color: #e2e8f0; width: 46px; text-align: right; flex-shrink: 0; }
+  .bar-blue { background: #38bdf8; }
+  .bar-green { background: #22c55e; }
+  .bar-yellow { background: #eab308; }
+  .bar-red { background: #ef4444; }
+  .bar-purple { background: #a855f7; }
+
+  /* Scatter Plot SVG */
+  .chart-area { width: 100%; height: 220px; }
+
+  /* Factor Table */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px; border-bottom: 1px solid #1e2d4a; text-align: left; }
+  td { padding: 8px 10px; border-bottom: 1px solid #111827; color: #94a3b8; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #111827; color: #cbd5e1; }
+  .ticker { color: #38bdf8; font-weight: 600; }
+  .score-pill { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .score-high { background: #052e16; color: #22c55e; }
+  .score-med { background: #1c1917; color: #eab308; }
+  .score-low { background: #2d0a0a; color: #ef4444; }
+
+  /* Heat Map */
+  .heatmap-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+  .hm-cell { border-radius: 4px; padding: 8px 4px; text-align: center; font-size: 10px; color: #fff; font-weight: 600; }
+  .hm-h1 { background: #166534; }
+  .hm-h2 { background: #15803d; }
+  .hm-h3 { background: #16a34a; }
+  .hm-n { background: #1e2d4a; color: #64748b; }
+  .hm-l1 { background: #7f1d1d; }
+  .hm-l2 { background: #991b1b; }
+  .hm-l3 { background: #b91c1c; }
+  .hm-cell .sector { font-size: 9px; font-weight: 400; opacity: 0.8; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="logo">Bursa<span>Factor</span></div>
+  <div class="nav-section">
+    <div class="nav-label">Analytics</div>
+    <div class="nav-item"><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>Overview</div>
+    <div class="nav-item active"><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Factor Analytics</div>
+    <div class="nav-item"><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 8v8m-8-5v5M8 3v3m8-3v3M3 20h18"/></svg>Backtest</div>
+    <div class="nav-item"><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>Signals</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Portfolio</div>
+    <div class="nav-item"><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Screener</div>
+    <div class="nav-item"><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>Holdings</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Compliance</div>
+    <div class="nav-item"><svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>SC Reports</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="page-title">Factor Analytics — KLCI Universe</div>
+    <div class="topbar-right">
+      <div class="date-badge">23 May 2026 · 16:45 MYT</div>
+      <button class="btn btn-outline">Export</button>
+      <button class="btn btn-primary">Run Model</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- KPI Bar -->
+    <div class="kpi-bar">
+      <div class="kpi-card">
+        <div class="kpi-label">Universe Size</div>
+        <div class="kpi-value">30</div>
+        <div class="kpi-delta" style="color:#64748b">KLCI Components</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Avg Factor Score</div>
+        <div class="kpi-value">67.4</div>
+        <div class="kpi-delta delta-up">▲ +2.1 vs last week</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Top Quintile Return</div>
+        <div class="kpi-value">+8.3%</div>
+        <div class="kpi-delta delta-up">▲ Outperform Q1</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Factor Momentum</div>
+        <div class="kpi-value">0.72</div>
+        <div class="kpi-delta delta-up">▲ IC 3M rolling</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Turnover Signal</div>
+        <div class="kpi-value">18.2%</div>
+        <div class="kpi-delta delta-down">▼ -3.4% vs prev</div>
+      </div>
+    </div>
+
+    <div class="grid-two">
+      <!-- Factor Exposure -->
+      <div class="card">
+        <div class="card-title">Factor Exposure Decomposition <span class="card-subtitle">Z-score normalized</span></div>
+        <div class="factor-list">
+          <div class="factor-row">
+            <div class="factor-name">Value</div>
+            <div class="factor-bar-bg"><div class="factor-bar bar-blue" style="width:78%"></div></div>
+            <div class="factor-val">+0.78</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-name">Momentum</div>
+            <div class="factor-bar-bg"><div class="factor-bar bar-green" style="width:63%"></div></div>
+            <div class="factor-val">+0.63</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-name">Quality</div>
+            <div class="factor-bar-bg"><div class="factor-bar bar-blue" style="width:55%"></div></div>
+            <div class="factor-val">+0.55</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-name">Low Vol</div>
+            <div class="factor-bar-bg"><div class="factor-bar bar-yellow" style="width:44%"></div></div>
+            <div class="factor-val">+0.44</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-name">Size</div>
+            <div class="factor-bar-bg"><div class="factor-bar bar-purple" style="width:31%"></div></div>
+            <div class="factor-val">+0.31</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-name">Dividend</div>
+            <div class="factor-bar-bg"><div class="factor-bar bar-green" style="width:67%"></div></div>
+            <div class="factor-val">+0.67</div>
+          </div>
+          <div class="factor-row">
+            <div class="factor-name">Growth</div>
+            <div class="factor-bar-bg"><div class="factor-bar bar-red" style="width:22%"></div></div>
+            <div class="factor-val">-0.22</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scatter Plot -->
+      <div class="card">
+        <div class="card-title">Value vs Momentum Scatter <span class="card-subtitle">KLCI 30</span></div>
+        <svg class="chart-area" viewBox="0 0 420 200">
+          <!-- Grid -->
+          <line x1="40" y1="10" x2="40" y2="175" stroke="#1e2d4a" stroke-width="1"/>
+          <line x1="40" y1="175" x2="410" y2="175" stroke="#1e2d4a" stroke-width="1"/>
+          <line x1="40" y1="10" x2="410" y2="10" stroke="#1e2d4a" stroke-width="0.5" stroke-dasharray="4"/>
+          <line x1="40" y1="92" x2="410" y2="92" stroke="#1e2d4a" stroke-width="0.5" stroke-dasharray="4"/>
+          <!-- Axis labels -->
+          <text x="220" y="195" fill="#475569" font-size="10" text-anchor="middle">Value Score →</text>
+          <text x="14" y="100" fill="#475569" font-size="10" text-anchor="middle" transform="rotate(-90,14,100)">Momentum →</text>
+          <!-- Trend line -->
+          <line x1="60" y1="160" x2="400" y2="30" stroke="#38bdf8" stroke-width="1" stroke-dasharray="5" opacity="0.5"/>
+          <!-- Data points -->
+          <circle cx="320" cy="45" r="6" fill="#22c55e" opacity="0.8"/><text x="328" y="43" fill="#94a3b8" font-size="9">MAYBANK</text>
+          <circle cx="290" cy="55" r="5" fill="#22c55e" opacity="0.8"/><text x="298" y="53" fill="#94a3b8" font-size="9">CIMB</text>
+          <circle cx="350" cy="35" r="5" fill="#22c55e" opacity="0.7"/><text x="358" y="33" fill="#94a3b8" font-size="9">PBB</text>
+          <circle cx="180" cy="110" r="5" fill="#38bdf8" opacity="0.8"/><text x="188" y="108" fill="#94a3b8" font-size="9">TENAGA</text>
+          <circle cx="150" cy="120" r="5" fill="#38bdf8" opacity="0.7"/>
+          <circle cx="220" cy="95" r="5" fill="#38bdf8" opacity="0.7"/>
+          <circle cx="100" cy="145" r="5" fill="#ef4444" opacity="0.7"/><text x="108" y="143" fill="#94a3b8" font-size="9">AXIATA</text>
+          <circle cx="80" cy="155" r="4" fill="#ef4444" opacity="0.7"/>
+          <circle cx="130" cy="135" r="5" fill="#eab308" opacity="0.7"/>
+          <circle cx="260" cy="75" r="5" fill="#22c55e" opacity="0.7"/>
+          <circle cx="380" cy="28" r="6" fill="#22c55e" opacity="0.9"/><text x="388" y="26" fill="#94a3b8" font-size="9">PCHEM</text>
+          <circle cx="200" cy="100" r="4" fill="#38bdf8" opacity="0.6"/>
+          <circle cx="310" cy="50" r="4" fill="#22c55e" opacity="0.6"/>
+          <!-- Legend -->
+          <circle cx="60" cy="15" r="5" fill="#22c55e"/>
+          <text x="70" y="19" fill="#64748b" font-size="9">High Score</text>
+          <circle cx="130" cy="15" r="5" fill="#38bdf8"/>
+          <text x="140" y="19" fill="#64748b" font-size="9">Mid Score</text>
+          <circle cx="200" cy="15" r="5" fill="#ef4444"/>
+          <text x="210" y="19" fill="#64748b" font-size="9">Low Score</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="grid-two">
+      <!-- Top Factor Stocks Table -->
+      <div class="card">
+        <div class="card-title">Top Factor Stocks — Long Signal</div>
+        <table>
+          <thead>
+            <tr><th>Ticker</th><th>Company</th><th>Composite</th><th>Value</th><th>Momentum</th><th>Quality</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="ticker">MAYBANK</td><td>Malayan Banking</td><td><span class="score-pill score-high">92</span></td><td>88</td><td>91</td><td>87</td></tr>
+            <tr><td class="ticker">PBB</td><td>Public Bank</td><td><span class="score-pill score-high">89</span></td><td>85</td><td>83</td><td>94</td></tr>
+            <tr><td class="ticker">PCHEM</td><td>Petronas Chemicals</td><td><span class="score-pill score-high">87</span></td><td>91</td><td>78</td><td>82</td></tr>
+            <tr><td class="ticker">CIMB</td><td>CIMB Group</td><td><span class="score-pill score-high">84</span></td><td>79</td><td>88</td><td>81</td></tr>
+            <tr><td class="ticker">TENAGA</td><td>Tenaga Nasional</td><td><span class="score-pill score-med">71</span></td><td>74</td><td>65</td><td>78</td></tr>
+            <tr><td class="ticker">RHBBANK</td><td>RHB Bank</td><td><span class="score-pill score-med">68</span></td><td>72</td><td>63</td><td>70</td></tr>
+            <tr><td class="ticker">AXIATA</td><td>Axiata Group</td><td><span class="score-pill score-low">38</span></td><td>32</td><td>41</td><td>44</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sector Heat Map -->
+      <div class="card">
+        <div class="card-title">Sector Heat Map — Factor Score</div>
+        <div class="heatmap-grid">
+          <div class="hm-cell hm-h1">+8.3%<div class="sector">Banking</div></div>
+          <div class="hm-cell hm-h2">+5.1%<div class="sector">Glove</div></div>
+          <div class="hm-cell hm-h3">+4.2%<div class="sector">Telecom</div></div>
+          <div class="hm-cell hm-n">+0.1%<div class="sector">Property</div></div>
+          <div class="hm-cell hm-n">-0.4%<div class="sector">Auto</div></div>
+          <div class="hm-cell hm-l1">-2.1%<div class="sector">Plantation</div></div>
+          <div class="hm-cell hm-l2">-4.7%<div class="sector">Energy</div></div>
+          <div class="hm-cell hm-h2">+5.8%<div class="sector">Tech</div></div>
+          <div class="hm-cell hm-h1">+7.1%<div class="sector">Finance</div></div>
+          <div class="hm-cell hm-n">+0.8%<div class="sector">Retail</div></div>
+          <div class="hm-cell hm-h3">+3.4%<div class="sector">Constr.</div></div>
+          <div class="hm-cell hm-l1">-1.8%<div class="sector">Utilities</div></div>
+          <div class="hm-cell hm-h2">+6.2%<div class="sector">REITs</div></div>
+          <div class="hm-cell hm-l3">-6.4%<div class="sector">O&amp;G</div></div>
+          <div class="hm-cell hm-n">-0.2%<div class="sector">Conglom.</div></div>
+          <div class="hm-cell hm-h3">+3.9%<div class="sector">Health</div></div>
+        </div>
+        <div style="margin-top:14px; display:flex; gap:10px; align-items:center;">
+          <div style="font-size:10px; color:#475569;">Scale:</div>
+          <div style="display:flex; gap:4px;">
+            <div style="width:20px;height:10px;background:#b91c1c;border-radius:2px;"></div>
+            <div style="width:20px;height:10px;background:#7f1d1d;border-radius:2px;"></div>
+            <div style="width:20px;height:10px;background:#1e2d4a;border-radius:2px;"></div>
+            <div style="width:20px;height:10px;background:#166534;border-radius:2px;"></div>
+            <div style="width:20px;height:10px;background:#15803d;border-radius:2px;"></div>
+          </div>
+          <div style="font-size:10px; color:#475569;">Low → High Return</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

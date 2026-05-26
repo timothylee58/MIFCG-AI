@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bajet Pro Mobile — Dashboard Overview | MIFCG-AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0d1321; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 24px; }
+  :root { --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45; --accent: #38bdf8; --accent2: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6; --text: #e2e8f0; --muted: #64748b; }
+
+  /* Phone Frame */
+  .phone-frame { width: 390px; min-height: 844px; background: #0a0e1a; border-radius: 44px; overflow: hidden; box-shadow: 0 0 0 10px #1a1a2e, 0 0 0 12px #222, 0 30px 80px rgba(0,0,0,0.7); position: relative; display: flex; flex-direction: column; }
+  .phone-notch { height: 44px; background: #0a0e1a; display: flex; align-items: center; justify-content: space-between; padding: 12px 24px 0; flex-shrink: 0; }
+  .notch-time { font-size: 15px; font-weight: 700; color: var(--text); }
+  .notch-icons { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--text); }
+  .phone-content { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* Top Nav */
+  .top-nav { background: linear-gradient(180deg, #0d1a2e 0%, #0a0e1a 100%); padding: 12px 20px 16px; }
+  .nav-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .greeting { font-size: 14px; color: var(--muted); }
+  .username { font-size: 18px; font-weight: 800; color: var(--text); }
+  .nav-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+  .notif-btn { width: 38px; height: 38px; background: var(--surface2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; position: relative; }
+  .notif-dot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--red); border: 2px solid #0a0e1a; }
+
+  /* Month Picker */
+  .month-picker { display: flex; align-items: center; justify-content: center; gap: 16px; background: var(--surface2); border-radius: 20px; padding: 8px 16px; }
+  .month-arrow { color: var(--muted); font-size: 14px; cursor: pointer; }
+  .month-text { font-size: 14px; font-weight: 700; color: var(--text); }
+
+  /* Budget Ring Card */
+  .budget-hero { margin: 16px; background: linear-gradient(135deg, #0d1f3c, #1a2235); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+  .budget-ring-container { display: flex; align-items: center; gap: 16px; }
+  .ring-label { flex: 1; }
+  .ring-title { font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .ring-amount { font-size: 28px; font-weight: 900; color: var(--text); letter-spacing: -0.02em; }
+  .ring-amount span { font-size: 14px; font-weight: 400; color: var(--muted); }
+  .ring-of { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .ring-status { display: inline-flex; align-items: center; gap: 5px; background: rgba(16,185,129,0.12); border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: var(--green); margin-top: 8px; }
+  .ring-status::before { content: '●'; font-size: 8px; }
+  .budget-remaining { margin-top: 16px; }
+  .rem-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .rem-bar { height: 8px; background: var(--surface); border-radius: 8px; overflow: hidden; }
+  .rem-bar-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, #10b981, #38bdf8); }
+  .rem-row { display: flex; justify-content: space-between; margin-top: 6px; }
+  .rem-spent { font-size: 12px; color: var(--text); font-weight: 600; }
+  .rem-left { font-size: 12px; color: var(--green); font-weight: 600; }
+
+  /* Quick Stats */
+  .quick-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 16px 16px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+  .stat-icon { font-size: 20px; margin-bottom: 6px; }
+  .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+  .stat-value { font-size: 18px; font-weight: 800; color: var(--text); margin: 4px 0; }
+  .stat-change { font-size: 11px; }
+
+  /* Spending Categories */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin: 0 16px 12px; }
+  .section-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .section-link { font-size: 12px; color: var(--accent); font-weight: 500; }
+  .categories { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .cat-row { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 12px; }
+  .cat-emoji { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .cat-info { flex: 1; }
+  .cat-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .cat-bar-row { height: 4px; border-radius: 4px; background: var(--surface2); width: 100%; overflow: hidden; }
+  .cat-bar-inner { height: 100%; border-radius: 4px; }
+  .cat-amount { text-align: right; }
+  .cat-amt-value { font-size: 13px; font-weight: 700; color: var(--text); }
+  .cat-pct-val { font-size: 10px; color: var(--muted); }
+
+  /* Transactions */
+  .transactions { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .txn-item { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; align-items: center; gap: 10px; }
+  .txn-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .txn-info { flex: 1; }
+  .txn-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .txn-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .txn-amount { font-size: 14px; font-weight: 800; }
+  .txn-amount.debit { color: var(--red); }
+  .txn-amount.credit { color: var(--green); }
+
+  /* Monthly Summary */
+  .monthly-summary { margin: 0 16px 16px; background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); border: 1px solid rgba(139,92,246,0.2); border-radius: 16px; padding: 16px; }
+  .summary-title { font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .summary-item { text-align: center; }
+  .summary-val { font-size: 15px; font-weight: 800; }
+  .summary-lbl { font-size: 10px; color: var(--muted); }
+
+  /* FAB */
+  .fab { position: fixed; bottom: 90px; right: calc(50% - 195px + 16px); width: 52px; height: 52px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 8px 24px rgba(59,130,246,0.4); cursor: pointer; }
+
+  /* Bottom Nav */
+  .bottom-nav { height: 72px; background: #0d1321; border-top: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-around; padding: 10px 8px 0; flex-shrink: 0; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex: 1; padding: 2px; }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+  .nav-item.active .nav-label { color: var(--accent); }
+  .nav-item.active .nav-icon { filter: none; }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <!-- Notch / Status Bar -->
+  <div class="phone-notch">
+    <div class="notch-time">14:37</div>
+    <div class="notch-icons">
+      <span>●●●●</span>
+      <span>WiFi</span>
+      <span>🔋 87%</span>
+    </div>
+  </div>
+
+  <div class="phone-content">
+    <!-- Top Navigation -->
+    <div class="top-nav">
+      <div class="nav-row">
+        <div>
+          <div class="greeting">Selamat Petang 👋</div>
+          <div class="username">Razif Zulkipli</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div class="notif-btn">🔔<div class="notif-dot"></div></div>
+          <div class="nav-avatar">RZ</div>
+        </div>
+      </div>
+      <div class="month-picker">
+        <span class="month-arrow">‹</span>
+        <span class="month-text">Mei 2025</span>
+        <span class="month-arrow">›</span>
+      </div>
+    </div>
+
+    <!-- Budget Ring Card -->
+    <div class="budget-hero">
+      <div class="budget-ring-container">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="42" fill="none" stroke="#1a2235" stroke-width="12"/>
+          <circle cx="50" cy="50" r="42" fill="none" stroke="url(#heroGrad)" stroke-width="12" stroke-dasharray="186" stroke-dashoffset="46" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+          <defs>
+            <linearGradient id="heroGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#10b981"/>
+              <stop offset="100%" stop-color="#38bdf8"/>
+            </linearGradient>
+          </defs>
+          <text x="50" y="46" text-anchor="middle" font-size="13" font-weight="800" fill="#e2e8f0">78%</text>
+          <text x="50" y="60" text-anchor="middle" font-size="8" fill="#64748b">digunakan</text>
+        </svg>
+        <div class="ring-label">
+          <div class="ring-title">Bajet Digunakan</div>
+          <div class="ring-amount">MYR <span style="font-size:28px; font-weight:900; color:var(--text);">4,280</span></div>
+          <div class="ring-of">daripada MYR 5,500.00</div>
+          <div class="ring-status">On Track</div>
+        </div>
+      </div>
+      <div class="budget-remaining" style="margin-top:16px;">
+        <div class="rem-label">MYR 1,220 baki · 8 hari berbaki</div>
+        <div class="rem-bar"><div class="rem-bar-fill" style="width:78%;"></div></div>
+        <div class="rem-row">
+          <span class="rem-spent">MYR 4,280 dibelanjakan</span>
+          <span class="rem-left">MYR 1,220 baki</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+      <div class="stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-label">Simpanan</div>
+        <div class="stat-value" style="color:var(--green);">MYR 890</div>
+        <div class="stat-change" style="color:var(--green);">▲ +MYR 120 dari Apr</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📉</div>
+        <div class="stat-label">Purata Harian</div>
+        <div class="stat-value">MYR 186</div>
+        <div class="stat-change" style="color:var(--yellow);">▲ +12% dari normal</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏦</div>
+        <div class="stat-label">EPF Bulan Ini</div>
+        <div class="stat-value" style="color:var(--accent);">MYR 715</div>
+        <div class="stat-change" style="color:var(--muted);">11% daripada gaji</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎯</div>
+        <div class="stat-label">Goals Active</div>
+        <div class="stat-value">3</div>
+        <div class="stat-change" style="color:var(--accent);">Lihat semua →</div>
+      </div>
+    </div>
+
+    <!-- Spending Categories -->
+    <div class="section-header">
+      <span class="section-title">Kategori Perbelanjaan</span>
+      <span class="section-link">Lihat semua</span>
+    </div>
+    <div class="categories">
+      <div class="cat-row">
+        <div class="cat-emoji" style="background:rgba(59,130,246,0.12);">🍜</div>
+        <div class="cat-info">
+          <div class="cat-name">Makanan & Minuman</div>
+          <div class="cat-bar-row"><div class="cat-bar-inner" style="width:82%; background:#3b82f6;"></div></div>
+        </div>
+        <div class="cat-amount">
+          <div class="cat-amt-value">MYR 1,240</div>
+          <div class="cat-pct-val">82% of limit</div>
+        </div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-emoji" style="background:rgba(139,92,246,0.12);">🏠</div>
+        <div class="cat-info">
+          <div class="cat-name">Sewa & Utiliti</div>
+          <div class="cat-bar-row"><div class="cat-bar-inner" style="width:100%; background:#8b5cf6;"></div></div>
+        </div>
+        <div class="cat-amount">
+          <div class="cat-amt-value">MYR 1,900</div>
+          <div class="cat-pct-val">100% — Full</div>
+        </div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-emoji" style="background:rgba(16,185,129,0.12);">🚗</div>
+        <div class="cat-info">
+          <div class="cat-name">Pengangkutan</div>
+          <div class="cat-bar-row"><div class="cat-bar-inner" style="width:65%; background:#10b981;"></div></div>
+        </div>
+        <div class="cat-amount">
+          <div class="cat-amt-value">MYR 520</div>
+          <div class="cat-pct-val">65% of limit</div>
+        </div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-emoji" style="background:rgba(245,158,11,0.12);">🛍️</div>
+        <div class="cat-info">
+          <div class="cat-name">Shopping</div>
+          <div class="cat-bar-row"><div class="cat-bar-inner" style="width:95%; background:#f59e0b;"></div></div>
+        </div>
+        <div class="cat-amount">
+          <div class="cat-amt-value" style="color:var(--yellow);">MYR 380</div>
+          <div class="cat-pct-val" style="color:var(--yellow);">95% — Near limit!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="section-header">
+      <span class="section-title">Transaksi Terbaru</span>
+      <span class="section-link">Semua transaksi</span>
+    </div>
+    <div class="transactions">
+      <div class="txn-item">
+        <div class="txn-icon" style="background:rgba(245,158,11,0.12);">🛵</div>
+        <div class="txn-info">
+          <div class="txn-name">Grab Food - MyBurgerLab</div>
+          <div class="txn-date">Hari ini, 12:34 PM · Makanan</div>
+        </div>
+        <div class="txn-amount debit">-MYR 32.80</div>
+      </div>
+      <div class="txn-item">
+        <div class="txn-icon" style="background:rgba(16,185,129,0.12);">💵</div>
+        <div class="txn-info">
+          <div class="txn-name">Gaji Masuk — Syarikat ABC</div>
+          <div class="txn-date">Semalam, 9:00 AM · Pendapatan</div>
+        </div>
+        <div class="txn-amount credit">+MYR 5,785</div>
+      </div>
+      <div class="txn-item">
+        <div class="txn-icon" style="background:rgba(59,130,246,0.12);">⚡</div>
+        <div class="txn-info">
+          <div class="txn-name">Tenaga Nasional Berhad</div>
+          <div class="txn-date">22 Mei · Utiliti</div>
+        </div>
+        <div class="txn-amount debit">-MYR 148.50</div>
+      </div>
+      <div class="txn-item">
+        <div class="txn-icon" style="background:rgba(239,68,68,0.12);">🛒</div>
+        <div class="txn-info">
+          <div class="txn-name">Shopee — Baju & Aksesori</div>
+          <div class="txn-date">21 Mei · Shopping</div>
+        </div>
+        <div class="txn-amount debit">-MYR 89.90</div>
+      </div>
+      <div class="txn-item">
+        <div class="txn-icon" style="background:rgba(139,92,246,0.12);">📱</div>
+        <div class="txn-info">
+          <div class="txn-name">Maxis — Bil Telefon</div>
+          <div class="txn-date">20 Mei · Telekomunikasi</div>
+        </div>
+        <div class="txn-amount debit">-MYR 98.00</div>
+      </div>
+    </div>
+
+    <!-- Monthly Summary -->
+    <div class="monthly-summary">
+      <div class="summary-title">📊 Ringkasan Bulanan</div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="summary-val" style="color:var(--green);">MYR 5,785</div>
+          <div class="summary-lbl">Pendapatan</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val" style="color:var(--red);">MYR 4,280</div>
+          <div class="summary-lbl">Perbelanjaan</div>
+        </div>
+        <div class="summary-item">
+          <div class="summary-val" style="color:var(--accent);">MYR 1,505</div>
+          <div class="summary-lbl">Simpanan</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- FAB -->
+  <div class="fab">+</div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label" style="color:var(--accent);">Utama</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Analitik</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">💳</span>
+      <span class="nav-label">Transaksi</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🎯</span>
+      <span class="nav-label">Goals</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Profil</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
