@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     supabase_service_key: str = ""
     redis_url: str = "redis://localhost:6379/0"
     anthropic_api_key: str = ""
+    openai_api_key: str = ""
     allowed_origins: str = "http://localhost:3000"
     environment: str = "development"
 
