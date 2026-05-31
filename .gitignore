@@ -18,6 +18,7 @@ node_modules/
 .turbo/
 out/
 build/
+*.tsbuildinfo
 
 # Env files
 .env
