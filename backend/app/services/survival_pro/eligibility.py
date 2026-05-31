@@ -5,7 +5,7 @@ Returns matched schemes with the reason and estimated benefit amount.
 
 from dataclasses import dataclass
 from .schemes import (
-    Scheme, ALL_SCHEMES,
+    Scheme,
     STR, SOCSO_EIS, EPF_AKAUN3, MYSALAM, PEKA_B40,
     JKM_AID, PTPTN_MORATORIUM, SELANGOR_AID, KL_AID,
 )
@@ -34,7 +34,6 @@ class EligibilityProfile:
 
 
 def _str_eligibility(p: EligibilityProfile) -> EligibilityResult:
-    annual = p.monthly_income_myr * 12
     # Household income threshold
     if p.monthly_income_myr <= 3000:
         if p.household_size >= 2 or p.has_children_under_18:
