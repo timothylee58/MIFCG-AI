@@ -1,7 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
+from app.core.auth import get_current_user
+from app.core.limiter import limiter
 
-router = APIRouter(prefix="/api/fxwatch", tags=["fxwatch"])
+router = APIRouter(
+    prefix="/api/fxwatch",
+    tags=["fxwatch"],
+    dependencies=[Depends(get_current_user)],
+)
 
 MYR_PAIRS = ["USD/MYR", "EUR/MYR", "GBP/MYR", "JPY/MYR", "SGD/MYR", "CNY/MYR"]
 
@@ -23,7 +29,8 @@ async def fxwatch_info():
 
 
 @router.get("/rates")
-async def get_rates():
+@limiter.limit("20/minute")
+async def get_rates(request: Request):
     """Phase 0+: Will return cached BNM FX rates from Redis."""
     raise HTTPException(
         status_code=501,
@@ -32,11 +39,13 @@ async def get_rates():
 
 
 @router.get("/stream")
-async def stream_rates():
+@limiter.limit("20/minute")
+async def stream_rates(request: Request):
     """Phase 0+: Will SSE-stream live FX tick data."""
     raise HTTPException(status_code=501, detail="SSE stream not yet implemented.")
 
 
 @router.post("/alerts")
-async def create_alert(alert: FXAlert):
+@limiter.limit("20/minute")
+async def create_alert(request: Request, alert: FXAlert):
     raise HTTPException(status_code=501, detail="Alerts not yet implemented.")

@@ -1,7 +1,13 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
+from app.core.auth import get_current_user
+from app.core.limiter import limiter
 
-router = APIRouter(prefix="/api/bursa-risk", tags=["bursa-risk"])
+router = APIRouter(
+    prefix="/api/bursa-risk",
+    tags=["bursa-risk"],
+    dependencies=[Depends(get_current_user)],
+)
 
 KLCI_COMPONENTS = [
     "MAYBANK", "CIMB", "PBB", "TENAGA", "PCHEM", "RHBBANK",
@@ -27,7 +33,8 @@ async def bursa_risk_info():
 
 
 @router.post("/scores")
-async def get_factor_scores(body: FactorScoreRequest):
+@limiter.limit("20/minute")
+async def get_factor_scores(request: Request, body: FactorScoreRequest):
     """Phase 3: XGBoost factor score inference."""
     raise HTTPException(
         status_code=501,
@@ -36,7 +43,9 @@ async def get_factor_scores(body: FactorScoreRequest):
 
 
 @router.get("/screener")
+@limiter.limit("20/minute")
 async def run_screener(
+    request: Request,
     min_score: float = 60.0,
     shariah_only: bool = False,
 ):
