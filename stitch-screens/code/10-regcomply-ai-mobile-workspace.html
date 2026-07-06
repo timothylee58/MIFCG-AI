@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RegComply AI Mobile Workspace | MIFCG-AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0d1321; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 24px; }
+  :root { --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45; --accent: #38bdf8; --accent2: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6; --text: #e2e8f0; --muted: #64748b; }
+
+  .phone-frame { width: 390px; min-height: 844px; background: #0a0e1a; border-radius: 44px; overflow: hidden; box-shadow: 0 0 0 10px #1a1a2e, 0 0 0 12px #222, 0 30px 80px rgba(0,0,0,0.7); display: flex; flex-direction: column; }
+  .phone-notch { height: 44px; background: #0a0e1a; display: flex; align-items: center; justify-content: space-between; padding: 12px 24px 0; flex-shrink: 0; }
+  .notch-time { font-size: 15px; font-weight: 700; color: var(--text); }
+  .notch-icons { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--text); }
+  .phone-content { flex: 1; overflow-y: auto; }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* Header */
+  .page-header { background: linear-gradient(180deg, #0d1f3c 0%, #0a0e1a 100%); padding: 12px 20px 16px; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .page-title { font-size: 19px; font-weight: 800; color: var(--text); }
+  .page-sub { font-size: 11px; color: var(--muted); }
+  .ai-badge { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2)); border: 1px solid rgba(139,92,246,0.4); border-radius: 20px; padding: 4px 10px; font-size: 10px; font-weight: 700; color: #c4b5fd; }
+  .notif-btn { position: relative; width: 36px; height: 36px; background: var(--surface2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .notif-badge { position: absolute; top: -2px; right: -2px; width: 16px; height: 16px; border-radius: 50%; background: var(--red); font-size: 9px; font-weight: 800; color: #fff; display: flex; align-items: center; justify-content: center; border: 2px solid #0a0e1a; }
+
+  /* Compliance Score Hero */
+  .score-hero { margin: 0 16px 14px; background: linear-gradient(135deg, #0d1f3c, #1a2235); border: 1px solid var(--border); border-radius: 18px; padding: 16px; }
+  .score-row { display: flex; align-items: center; gap: 14px; }
+  .score-ring { flex-shrink: 0; }
+  .score-info { flex: 1; }
+  .score-label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .score-val { font-size: 38px; font-weight: 900; color: var(--green); line-height: 1; }
+  .score-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .score-badges { display: flex; gap: 6px; margin-top: 8px; }
+  .score-badge { padding: 3px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; }
+  .stat-mini-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .stat-mini { background: var(--surface); border-radius: 10px; padding: 8px; text-align: center; }
+  .stat-mini-val { font-size: 16px; font-weight: 800; }
+  .stat-mini-lbl { font-size: 9px; color: var(--muted); }
+
+  /* Quick Actions -->
+  .quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 16px 14px; }
+  .qa-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; transition: all 0.15s; }
+  .qa-btn:active { transform: scale(0.97); }
+  .qa-btn.primary { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.15)); border-color: rgba(59,130,246,0.3); }
+  .qa-icon { font-size: 22px; }
+  .qa-label { font-size: 11px; font-weight: 600; color: var(--text); text-align: center; }
+
+  /* Section -->
+  .section-hd { display: flex; align-items: center; justify-content: space-between; padding: 0 16px; margin-bottom: 10px; }
+  .section-title { font-size: 13px; font-weight: 700; color: var(--text); }
+  .section-link { font-size: 11px; color: var(--accent); }
+  .section-mb { margin-bottom: 14px; }
+
+  /* Document Cards -->
+  .doc-cards { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .doc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; }
+  .doc-card-top { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .doc-type-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; font-weight: 800; font-size: 11px; }
+  .doc-type-icon.pdf { background: rgba(239,68,68,0.12); color: #ef4444; }
+  .doc-type-icon.doc { background: rgba(59,130,246,0.12); color: #3b82f6; }
+  .doc-type-icon.xls { background: rgba(16,185,129,0.12); color: #10b981; }
+  .doc-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; flex: 1; }
+  .doc-badges { display: flex; gap: 5px; flex-wrap: wrap; }
+  .badge { padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 700; }
+  .badge-review { background: rgba(245,158,11,0.12); color: var(--yellow); }
+  .badge-approved { background: rgba(16,185,129,0.12); color: var(--green); }
+  .badge-flagged { background: rgba(239,68,68,0.12); color: var(--red); }
+  .badge-pending { background: rgba(100,116,139,0.12); color: #94a3b8; }
+  .badge-bnm { background: rgba(59,130,246,0.12); color: #60a5fa; }
+  .badge-sc { background: rgba(139,92,246,0.12); color: #a78bfa; }
+  .doc-meta { font-size: 10px; color: var(--muted); }
+  .doc-progress { height: 3px; background: var(--surface2); border-radius: 3px; margin-top: 8px; }
+  .doc-progress-fill { height: 100%; border-radius: 3px; }
+
+  /* Checklist -->
+  .checklist { padding: 0 16px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .check-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+  .check-icon { width: 22px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+  .check-icon.done { background: rgba(16,185,129,0.15); color: var(--green); }
+  .check-icon.todo { background: var(--surface2); border: 1.5px solid var(--border); }
+  .check-icon.fail { background: rgba(239,68,68,0.12); color: var(--red); }
+  .check-info { flex: 1; }
+  .check-title { font-size: 12px; font-weight: 600; color: var(--text); }
+  .check-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .check-reg { font-size: 10px; color: var(--purple); margin-top: 2px; }
+
+  /* Notification Feed -->
+  .notif-feed { padding: 0 16px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  .notif-item { display: flex; gap: 10px; padding: 10px 12px; background: var(--surface); border-left: 3px solid var(--border); border-radius: 0 12px 12px 0; border-top: 1px solid var(--border); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .notif-item.critical { border-left-color: var(--red); }
+  .notif-item.warning { border-left-color: var(--yellow); }
+  .notif-item.info { border-left-color: var(--accent); }
+  .notif-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .notif-body { flex: 1; }
+  .notif-title { font-size: 12px; font-weight: 600; color: var(--text); }
+  .notif-desc { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+  .notif-time { font-size: 9px; color: var(--muted); margin-top: 3px; }
+
+  /* Approval Workflow -->
+  .workflow-card { margin: 0 16px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+  .workflow-title { font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 12px; }
+  .workflow-steps { display: flex; align-items: center; gap: 0; }
+  .wf-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .wf-circle { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; z-index: 1; }
+  .wf-circle.done { background: var(--green); color: #fff; }
+  .wf-circle.current { background: var(--accent2); color: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,0.3); }
+  .wf-circle.pending { background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border); }
+  .wf-label { font-size: 9px; color: var(--muted); margin-top: 5px; text-align: center; }
+  .wf-connector { height: 2px; flex: 1; margin: 0 -8px; margin-top: -17px; z-index: 0; }
+  .wf-connector.done { background: var(--green); }
+  .wf-connector.pending { background: var(--border); }
+
+  /* Bottom Nav -->
+  .bottom-nav { height: 72px; background: #0d1321; border-top: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-around; padding: 10px 8px 0; flex-shrink: 0; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex: 1; }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="phone-notch">
+    <div class="notch-time">14:37</div>
+    <div class="notch-icons"><span>●●●●</span><span>WiFi</span><span>🔋 87%</span></div>
+  </div>
+
+  <div class="phone-content">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-top">
+        <div>
+          <div class="page-title">RegComply AI</div>
+          <div class="page-sub">Mobile Compliance Workspace</div>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <span class="ai-badge">✨ AI</span>
+          <div class="notif-btn">🔔<div class="notif-badge">3</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compliance Score Hero -->
+    <div class="score-hero">
+      <div class="score-row">
+        <svg class="score-ring" width="90" height="90" viewBox="0 0 90 90">
+          <circle cx="45" cy="45" r="36" fill="none" stroke="#1a2235" stroke-width="10"/>
+          <circle cx="45" cy="45" r="36" fill="none" stroke="#10b981" stroke-width="10" stroke-dasharray="170" stroke-dashoffset="37" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+          <text x="45" y="40" text-anchor="middle" font-size="18" font-weight="900" fill="#10b981">87</text>
+          <text x="45" y="55" text-anchor="middle" font-size="9" fill="#64748b">/100</text>
+        </svg>
+        <div class="score-info">
+          <div class="score-label">Overall Compliance Score</div>
+          <div class="score-val">87</div>
+          <div class="score-sub">Good Standing · 3 issues pending</div>
+          <div class="score-badges">
+            <span class="score-badge" style="background:rgba(16,185,129,0.12); color:var(--green);">BNM: 92%</span>
+            <span class="score-badge" style="background:rgba(56,189,248,0.12); color:var(--accent);">SC: 84%</span>
+          </div>
+        </div>
+      </div>
+      <div class="stat-mini-row">
+        <div class="stat-mini"><div class="stat-mini-val" style="color:var(--green);">18</div><div class="stat-mini-lbl">Compliant</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:var(--yellow);">6</div><div class="stat-mini-lbl">Pending</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:var(--red);">3</div><div class="stat-mini-lbl">Critical</div></div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-hd section-mb"><span class="section-title">Tindakan Cepat</span></div>
+    <div class="quick-actions">
+      <div class="qa-btn primary">
+        <span class="qa-icon">📷</span>
+        <span class="qa-label">Scan & Upload Dokumen</span>
+      </div>
+      <div class="qa-btn primary">
+        <span class="qa-icon">🤖</span>
+        <span class="qa-label">Analisis AI</span>
+      </div>
+      <div class="qa-btn">
+        <span class="qa-icon">✅</span>
+        <span class="qa-label">Semak Checklist</span>
+      </div>
+      <div class="qa-btn">
+        <span class="qa-icon">📊</span>
+        <span class="qa-label">Laporan Pematuhan</span>
+      </div>
+    </div>
+
+    <!-- Documents Under Review -->
+    <div class="section-hd section-mb"><span class="section-title">Dokumen Dalam Semakan</span><span class="section-link">Semua →</span></div>
+    <div class="doc-cards">
+      <div class="doc-card" style="border-color:rgba(245,158,11,0.2);">
+        <div class="doc-card-top">
+          <div class="doc-type-icon pdf">PDF</div>
+          <div>
+            <div class="doc-name">AML-CFT Policy Framework 2024</div>
+            <div class="doc-badges">
+              <span class="badge badge-review">Under Review</span>
+              <span class="badge badge-bnm">BNM</span>
+            </div>
+            <div class="doc-meta" style="margin-top:3px;">v3.2 · 24 halaman · 2 jam lalu</div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:4px;">
+          <span>Kemajuan analisis AI</span><span style="color:var(--yellow);">78%</span>
+        </div>
+        <div class="doc-progress"><div class="doc-progress-fill" style="width:78%; background:var(--yellow);"></div></div>
+      </div>
+      <div class="doc-card" style="border-color:rgba(239,68,68,0.2);">
+        <div class="doc-card-top">
+          <div class="doc-type-icon doc">DOC</div>
+          <div>
+            <div class="doc-name">Digital Banking License Application — Supplementary</div>
+            <div class="doc-badges">
+              <span class="badge badge-flagged">⚠ Flagged</span>
+              <span class="badge badge-bnm">BNM</span>
+            </div>
+            <div class="doc-meta" style="margin-top:3px;">v1.5 · 3 isu kritikal · 3 hari lalu</div>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:4px;">
+          <span>Analisis AI selesai</span><span style="color:var(--red);">Perlu semak!</span>
+        </div>
+        <div class="doc-progress"><div class="doc-progress-fill" style="width:100%; background:var(--red);"></div></div>
+      </div>
+      <div class="doc-card">
+        <div class="doc-card-top">
+          <div class="doc-type-icon pdf">PDF</div>
+          <div>
+            <div class="doc-name">Capital Markets Services Act Compliance Q1</div>
+            <div class="doc-badges">
+              <span class="badge badge-approved">Approved</span>
+              <span class="badge badge-sc">SC</span>
+            </div>
+            <div class="doc-meta" style="margin-top:3px;">v2.0 · Diluluskan 1 hari lalu</div>
+          </div>
+        </div>
+        <div class="doc-progress"><div class="doc-progress-fill" style="width:100%; background:var(--green);"></div></div>
+      </div>
+    </div>
+
+    <!-- Compliance Checklist -->
+    <div class="section-hd section-mb"><span class="section-title">Checklist Pematuhan</span><span class="section-link">Penuh →</span></div>
+    <div class="checklist">
+      <div class="check-item">
+        <div class="check-icon done">✓</div>
+        <div class="check-info">
+          <div class="check-title">Customer Due Diligence (CDD) — Completed</div>
+          <div class="check-sub">Semua peringkat CDD dikemaskini mengikut BNM</div>
+          <div class="check-reg">BNM AMLA 2001 · FSA 2013</div>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon fail">✕</div>
+        <div class="check-info">
+          <div class="check-title">Transaksi Limit — Perlu Dikemaskini</div>
+          <div class="check-sub">Had Tier 2 MYR 10,000 tidak konsisten dengan BNM Nov 2023</div>
+          <div class="check-reg">BNM Circular JPI/BKL/10/4/1 (2023)</div>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon done">✓</div>
+        <div class="check-info">
+          <div class="check-title">Suspicious Transaction Report (STR) — Submitted</div>
+          <div class="check-sub">STR Mac 2025 diserahkan kepada BNM FIU dalam 3 hari</div>
+          <div class="check-reg">BNM AMLA Section 14</div>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon todo"></div>
+        <div class="check-info">
+          <div class="check-title">PDPA Consent Review — Belum Selesai</div>
+          <div class="check-sub">Borang persetujuan pelanggan perlu dikemaskini</div>
+          <div class="check-reg">PDPA 2010 · Seksyen 6</div>
+        </div>
+      </div>
+      <div class="check-item">
+        <div class="check-icon done">✓</div>
+        <div class="check-info">
+          <div class="check-title">FATCA/CRS Reporting — Submitted</div>
+          <div class="check-sub">Laporan Q1 2025 diserahkan kepada LHDN</div>
+          <div class="check-reg">IRB / FATCA IGA · CRS OECD</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approval Workflow -->
+    <div class="workflow-card">
+      <div class="workflow-title">📋 Aliran Kelulusan — AML-CFT Policy v3.2</div>
+      <div class="workflow-steps">
+        <div class="wf-step">
+          <div class="wf-circle done">✓</div>
+          <span class="wf-label">Draft</span>
+        </div>
+        <div class="wf-connector done"></div>
+        <div class="wf-step">
+          <div class="wf-circle done">✓</div>
+          <span class="wf-label">AI Review</span>
+        </div>
+        <div class="wf-connector done"></div>
+        <div class="wf-step">
+          <div class="wf-circle current">3</div>
+          <span class="wf-label" style="color:var(--accent);">Legal</span>
+        </div>
+        <div class="wf-connector pending"></div>
+        <div class="wf-step">
+          <div class="wf-circle pending">4</div>
+          <span class="wf-label">Board</span>
+        </div>
+        <div class="wf-connector pending"></div>
+        <div class="wf-step">
+          <div class="wf-circle pending">5</div>
+          <span class="wf-label">BNM</span>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px; color:var(--muted);">
+        <span>Langkah 3 / 5 · Legal Review</span>
+        <span>Dijangka siap: 28 Mei 2025</span>
+      </div>
+    </div>
+
+    <!-- BNM/SC Notification Feed -->
+    <div class="section-hd section-mb"><span class="section-title">Notifikasi BNM/SC</span><span class="section-link">Semua →</span></div>
+    <div class="notif-feed">
+      <div class="notif-item critical">
+        <span class="notif-icon">🚨</span>
+        <div class="notif-body">
+          <div class="notif-title">BNM — Tarikh Akhir Pematuhan: 28 Mei 2025</div>
+          <div class="notif-desc">Polisi AML/CFT perlu dikemaskini sebelum tarikh kuatkuasa BNM Circular terbaru</div>
+          <div class="notif-time">5 hari lagi · BNM Circular JPI/BKL/10/4/1</div>
+        </div>
+      </div>
+      <div class="notif-item warning">
+        <span class="notif-icon">⚠️</span>
+        <div class="notif-body">
+          <div class="notif-title">SC Malaysia — Garis Panduan ESG Baharu</div>
+          <div class="notif-desc">SC/GL/2025-03 mengenai pendedahan ESG untuk pengurus dana dikuatkuasakan 30 Mei 2025</div>
+          <div class="notif-time">7 hari lagi · Securities Commission</div>
+        </div>
+      </div>
+      <div class="notif-item info">
+        <span class="notif-icon">ℹ️</span>
+        <div class="notif-body">
+          <div class="notif-title">Bursa Malaysia — Penyata Kewangan Tahunan</div>
+          <div class="notif-desc">Syarikat tersenarai perlu hantar penyata FY2024 sebelum 5 Jun 2025</div>
+          <div class="notif-time">13 hari lagi · Bursa Malaysia</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label" style="color:var(--accent);">Workspace</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📁</span>
+      <span class="nav-label">Dokumen</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🤖</span>
+      <span class="nav-label">AI Analisis</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Notifikasi</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Tetapan</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

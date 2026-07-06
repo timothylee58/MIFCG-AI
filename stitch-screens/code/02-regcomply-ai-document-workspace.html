@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RegComply AI - Document Workspace | MIFCG-AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0a0e1a; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  :root { --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45; --accent: #38bdf8; --accent2: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6; --text: #e2e8f0; --muted: #64748b; }
+
+  /* Top Bar */
+  .topbar { height: 52px; background: #0d1321; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 16px; flex-shrink: 0; }
+  .topbar-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; color: var(--accent); }
+  .topbar-logo svg { width: 22px; height: 22px; }
+  .topbar-divider { width: 1px; height: 24px; background: var(--border); }
+  .topbar-title { font-size: 14px; color: var(--muted); }
+  .topbar-breadcrumb { font-size: 14px; color: var(--text); font-weight: 500; }
+  .topbar-spacer { flex: 1; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .btn { padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent2); color: #fff; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-ghost { background: transparent; color: var(--muted); border: none; padding: 6px 8px; }
+  .btn-ghost:hover { color: var(--text); background: var(--surface2); border-radius: 6px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+
+  /* Main Layout */
+  .workspace { display: flex; flex: 1; overflow: hidden; }
+
+  /* Left Panel - Document List */
+  .doc-panel { width: 280px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  .search-box { margin: 12px; position: relative; }
+  .search-box input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 7px 10px 7px 32px; font-size: 12px; color: var(--text); outline: none; }
+  .search-box input::placeholder { color: var(--muted); }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+  .doc-filters { padding: 0 12px 8px; display: flex; gap: 4px; flex-wrap: wrap; }
+  .filter-chip { padding: 3px 10px; border-radius: 20px; font-size: 11px; border: 1px solid var(--border); cursor: pointer; color: var(--muted); background: transparent; transition: all 0.15s; }
+  .filter-chip.active { background: rgba(56,189,248,0.15); border-color: var(--accent); color: var(--accent); }
+  .doc-list { flex: 1; overflow-y: auto; padding: 4px 8px; }
+  .doc-list::-webkit-scrollbar { width: 4px; }
+  .doc-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .doc-item { padding: 10px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; border: 1px solid transparent; transition: all 0.15s; }
+  .doc-item:hover { background: var(--surface2); }
+  .doc-item.active { background: rgba(56,189,248,0.08); border-color: rgba(56,189,248,0.3); }
+  .doc-item-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .doc-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px; }
+  .doc-icon.pdf { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .doc-icon.docx { background: rgba(59,130,246,0.15); color: #3b82f6; }
+  .doc-icon.xlsx { background: rgba(16,185,129,0.15); color: #10b981; }
+  .doc-name { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.4; }
+  .doc-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .status-badge { padding: 2px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .status-badge.approved { background: rgba(16,185,129,0.15); color: #10b981; }
+  .status-badge.review { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .status-badge.pending { background: rgba(100,116,139,0.15); color: #94a3b8; }
+  .status-badge.flagged { background: rgba(239,68,68,0.15); color: #ef4444; }
+  .reg-tag { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; background: rgba(139,92,246,0.15); color: #a78bfa; }
+  .doc-date { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+  /* Center Panel - Document Viewer */
+  .doc-viewer { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .viewer-toolbar { height: 44px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 8px; }
+  .toolbar-group { display: flex; gap: 2px; align-items: center; }
+  .tool-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; color: var(--muted); border: none; background: transparent; font-size: 14px; transition: all 0.15s; }
+  .tool-btn:hover { background: var(--surface2); color: var(--text); }
+  .tool-btn.active { background: rgba(56,189,248,0.15); color: var(--accent); }
+  .toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+  .doc-title-area { flex: 1; display: flex; align-items: center; gap: 8px; padding: 0 12px; }
+  .doc-title-area span { font-size: 13px; font-weight: 500; }
+  .version-select { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; padding: 3px 8px; font-size: 11px; color: var(--muted); cursor: pointer; }
+
+  /* Document Content */
+  .doc-content-area { flex: 1; overflow-y: auto; background: #0d1321; display: flex; justify-content: center; padding: 24px; }
+  .doc-page { width: 680px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 48px; min-height: 860px; position: relative; }
+  .doc-page-header { margin-bottom: 32px; padding-bottom: 20px; border-bottom: 2px solid var(--border); }
+  .doc-page-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .doc-page-meta { display: flex; gap: 16px; font-size: 12px; color: var(--muted); }
+  .doc-section { margin-bottom: 24px; }
+  .doc-section h3 { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .doc-section p { font-size: 13px; line-height: 1.8; color: #94a3b8; margin-bottom: 8px; }
+  .annotation { background: rgba(245,158,11,0.12); border-left: 3px solid #f59e0b; padding: 8px 12px; border-radius: 0 6px 6px 0; margin: 8px 0; position: relative; }
+  .annotation::after { content: 'AI Note'; position: absolute; top: 6px; right: 8px; font-size: 9px; font-weight: 700; color: #f59e0b; background: rgba(245,158,11,0.2); padding: 1px 5px; border-radius: 3px; }
+  .highlight-green { background: rgba(16,185,129,0.12); border-left: 3px solid #10b981; padding: 8px 12px; border-radius: 0 6px 6px 0; margin: 8px 0; }
+  .highlight-red { background: rgba(239,68,68,0.12); border-left: 3px solid #ef4444; padding: 8px 12px; border-radius: 0 6px 6px 0; margin: 8px 0; }
+  .table-simple { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; }
+  .table-simple th { background: var(--surface2); padding: 8px 12px; text-align: left; color: var(--muted); font-weight: 600; font-size: 11px; }
+  .table-simple td { padding: 8px 12px; border-top: 1px solid var(--border); color: #94a3b8; }
+
+  /* Right Panel - AI Analysis */
+  .ai-panel { width: 320px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+  .ai-panel-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .ai-tab { flex: 1; padding: 10px; font-size: 11px; font-weight: 600; text-align: center; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .ai-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .ai-content { flex: 1; overflow-y: auto; padding: 16px; }
+  .ai-content::-webkit-scrollbar { width: 4px; }
+  .ai-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Compliance Score */
+  .compliance-score-card { background: var(--surface2); border-radius: 10px; padding: 16px; margin-bottom: 16px; text-align: center; }
+  .score-ring { position: relative; width: 90px; height: 90px; margin: 0 auto 12px; }
+  .score-ring svg { transform: rotate(-90deg); }
+  .score-value { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; font-weight: 700; color: var(--green); }
+  .score-label { font-size: 11px; color: var(--muted); }
+  .score-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .score-detail-item { background: var(--surface); border-radius: 6px; padding: 8px; text-align: center; }
+  .score-detail-item .val { font-size: 14px; font-weight: 700; color: var(--text); }
+  .score-detail-item .lbl { font-size: 10px; color: var(--muted); }
+
+  /* Regulation Tags */
+  .reg-section { margin-bottom: 16px; }
+  .reg-section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+  .reg-tag-row { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: var(--surface2); border-radius: 6px; margin-bottom: 4px; }
+  .reg-tag-name { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .reg-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .reg-status { font-size: 10px; font-weight: 600; }
+
+  /* Issues List */
+  .issue-item { background: var(--surface2); border-radius: 8px; padding: 10px; margin-bottom: 8px; border-left: 3px solid; }
+  .issue-item.high { border-color: var(--red); }
+  .issue-item.medium { border-color: var(--yellow); }
+  .issue-item.low { border-color: var(--green); }
+  .issue-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .issue-title { font-size: 12px; font-weight: 600; color: var(--text); }
+  .issue-severity { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
+  .issue-severity.high { background: rgba(239,68,68,0.15); color: var(--red); }
+  .issue-severity.medium { background: rgba(245,158,11,0.15); color: var(--yellow); }
+  .issue-severity.low { background: rgba(16,185,129,0.15); color: var(--green); }
+  .issue-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .issue-clause { font-size: 10px; color: #a78bfa; margin-top: 4px; }
+
+  /* Workflow */
+  .workflow-steps { display: flex; flex-direction: column; gap: 4px; }
+  .workflow-step { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; }
+  .workflow-step.done { opacity: 0.6; }
+  .workflow-step.current { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); }
+  .step-circle { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+  .step-circle.done { background: var(--green); color: #fff; }
+  .step-circle.current { background: var(--accent); color: #fff; }
+  .step-circle.pending { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .step-info { flex: 1; }
+  .step-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .step-assignee { font-size: 10px; color: var(--muted); }
+  .step-date { font-size: 10px; color: var(--muted); }
+
+  /* Version History */
+  .version-item { display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .version-marker { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .v-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 4px; }
+  .v-line { width: 1px; flex: 1; background: var(--border); }
+  .version-info { flex: 1; }
+  .version-num { font-size: 11px; font-weight: 700; color: var(--accent); }
+  .version-desc { font-size: 11px; color: var(--text); }
+  .version-meta { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* Bottom Status Bar */
+  .status-bar { height: 28px; background: #090d18; border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 20px; }
+  .status-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+</style>
+</head>
+<body>
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    MIFCG-AI
+  </div>
+  <div class="topbar-divider"></div>
+  <span class="topbar-title">RegComply AI</span>
+  <span style="color:var(--muted)">›</span>
+  <span class="topbar-breadcrumb">Document Workspace</span>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-actions">
+    <button class="btn btn-outline" style="font-size:12px;">
+      <span>↑ Upload</span>
+    </button>
+    <button class="btn btn-primary" style="font-size:12px;">Run AI Analysis</button>
+    <div class="avatar">AH</div>
+  </div>
+</div>
+
+<!-- Main Workspace -->
+<div class="workspace">
+  <!-- Left: Document List Panel -->
+  <div class="doc-panel">
+    <div class="panel-header">
+      <span class="panel-title">Documents (24)</span>
+      <button class="btn-ghost" style="font-size:18px; cursor:pointer; color:var(--muted);">+</button>
+    </div>
+    <div class="search-box">
+      <span class="search-icon">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </span>
+      <input type="text" placeholder="Search documents...">
+    </div>
+    <div class="doc-filters">
+      <span class="filter-chip active">All</span>
+      <span class="filter-chip">Review</span>
+      <span class="filter-chip">BNM</span>
+      <span class="filter-chip">SC</span>
+      <span class="filter-chip">Flagged</span>
+    </div>
+    <div class="doc-list">
+      <!-- Doc 1 Active -->
+      <div class="doc-item active">
+        <div class="doc-item-header">
+          <div class="doc-icon pdf">PDF</div>
+          <div style="flex:1;">
+            <div class="doc-name">AML-CFT Policy Framework 2024</div>
+            <div class="doc-meta">
+              <span class="status-badge review">Under Review</span>
+              <span class="reg-tag">BNM</span>
+            </div>
+          </div>
+        </div>
+        <div class="doc-date">Modified 2 hours ago · v3.2</div>
+      </div>
+      <!-- Doc 2 -->
+      <div class="doc-item">
+        <div class="doc-item-header">
+          <div class="doc-icon pdf">PDF</div>
+          <div style="flex:1;">
+            <div class="doc-name">Capital Markets Services Act Compliance Report Q1 2024</div>
+            <div class="doc-meta">
+              <span class="status-badge approved">Approved</span>
+              <span class="reg-tag">SC</span>
+            </div>
+          </div>
+        </div>
+        <div class="doc-date">Modified 1 day ago · v2.0</div>
+      </div>
+      <!-- Doc 3 -->
+      <div class="doc-item">
+        <div class="doc-item-header">
+          <div class="doc-icon docx">DOC</div>
+          <div style="flex:1;">
+            <div class="doc-name">Digital Banking License Application — Supplementary</div>
+            <div class="doc-meta">
+              <span class="status-badge flagged">Flagged</span>
+              <span class="reg-tag">BNM</span>
+            </div>
+          </div>
+        </div>
+        <div class="doc-date">Modified 3 days ago · v1.5</div>
+      </div>
+      <!-- Doc 4 -->
+      <div class="doc-item">
+        <div class="doc-item-header">
+          <div class="doc-icon xlsx">XLS</div>
+          <div style="flex:1;">
+            <div class="doc-name">Suspicious Transaction Reports — Mar 2024</div>
+            <div class="doc-meta">
+              <span class="status-badge approved">Approved</span>
+              <span class="reg-tag">BNM</span>
+            </div>
+          </div>
+        </div>
+        <div class="doc-date">Modified 5 days ago · v1.0</div>
+      </div>
+      <!-- Doc 5 -->
+      <div class="doc-item">
+        <div class="doc-item-header">
+          <div class="doc-icon pdf">PDF</div>
+          <div style="flex:1;">
+            <div class="doc-name">Investment Management Compliance Manual</div>
+            <div class="doc-meta">
+              <span class="status-badge review">Under Review</span>
+              <span class="reg-tag">SC</span>
+            </div>
+          </div>
+        </div>
+        <div class="doc-date">Modified 6 days ago · v4.1</div>
+      </div>
+      <!-- Doc 6 -->
+      <div class="doc-item">
+        <div class="doc-item-header">
+          <div class="doc-icon pdf">PDF</div>
+          <div style="flex:1;">
+            <div class="doc-name">PDPA Data Protection Policy Statement</div>
+            <div class="doc-meta">
+              <span class="status-badge pending">Pending</span>
+              <span class="reg-tag">PDPA</span>
+            </div>
+          </div>
+        </div>
+        <div class="doc-date">Modified 1 week ago · v2.3</div>
+      </div>
+      <!-- Doc 7 -->
+      <div class="doc-item">
+        <div class="doc-item-header">
+          <div class="doc-icon docx">DOC</div>
+          <div style="flex:1;">
+            <div class="doc-name">FATCA/CRS Reporting Procedures 2024</div>
+            <div class="doc-meta">
+              <span class="status-badge approved">Approved</span>
+              <span class="reg-tag">BNM</span>
+            </div>
+          </div>
+        </div>
+        <div class="doc-date">Modified 2 weeks ago · v1.8</div>
+      </div>
+      <!-- Doc 8 -->
+      <div class="doc-item">
+        <div class="doc-item-header">
+          <div class="doc-icon pdf">PDF</div>
+          <div style="flex:1;">
+            <div class="doc-name">Consumer Protection Framework — Fintech</div>
+            <div class="doc-meta">
+              <span class="status-badge flagged">Flagged</span>
+              <span class="reg-tag">SC</span>
+            </div>
+          </div>
+        </div>
+        <div class="doc-date">Modified 3 weeks ago · v3.0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center: Document Viewer -->
+  <div class="doc-viewer">
+    <div class="viewer-toolbar">
+      <div class="toolbar-group">
+        <button class="tool-btn" title="Zoom Out">−</button>
+        <span style="font-size:11px; color:var(--muted); padding:0 4px;">100%</span>
+        <button class="tool-btn" title="Zoom In">+</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="toolbar-group">
+        <button class="tool-btn active" title="Highlight">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </button>
+        <button class="tool-btn" title="Comment">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </button>
+        <button class="tool-btn" title="Redline">R</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <div class="doc-title-area">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span>AML-CFT Policy Framework 2024.pdf</span>
+        <span class="status-badge review">Under Review</span>
+      </div>
+      <select class="version-select">
+        <option>v3.2 (Current)</option>
+        <option>v3.1</option>
+        <option>v3.0</option>
+        <option>v2.4</option>
+      </select>
+    </div>
+
+    <div class="doc-content-area">
+      <div class="doc-page">
+        <div class="doc-page-header">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <div style="font-size:10px; font-weight:700; color:var(--accent); background:rgba(56,189,248,0.1); padding:3px 8px; border-radius:4px; text-transform:uppercase;">BNM/RH/PD 028-2</div>
+            <div style="font-size:10px; color:var(--muted);">Classification: Confidential</div>
+          </div>
+          <div class="doc-page-title">Anti-Money Laundering and Counter Financing of Terrorism (AML/CFT) — Digital Financial Services Policy Framework</div>
+          <div class="doc-page-meta">
+            <span>Document No: MIFCG/COMP/2024/0142</span>
+            <span>Effective: 01 Jan 2024</span>
+            <span>Review: 31 Dec 2024</span>
+            <span>Version: 3.2</span>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h3>1. Introduction and Regulatory Basis</h3>
+          <p>This policy framework establishes the Anti-Money Laundering and Counter Financing of Terrorism (AML/CFT) requirements applicable to all digital financial services providers operating under the purview of Bank Negara Malaysia (BNM), pursuant to the Financial Services Act 2013 (FSA 2013) and Anti-Money Laundering, Anti-Terrorism Financing and Proceeds of Unlawful Activities Act 2001 (AMLA).</p>
+          <div class="annotation">
+            <p style="font-size:11px; color:#f59e0b; line-height:1.6;">AI Analysis: Section references AMLA 2001. Note BNM issued updated AMLA guidelines in December 2023 — cross-reference required. Clause 3.4 of the new guidelines may supersede paragraph 1.2.3 of this document.</p>
+          </div>
+          <p>All reporting institutions, including licensed digital banks, e-money issuers, and payment system operators, must comply with the provisions outlined herein. Non-compliance may attract civil and criminal penalties under Section 24 of AMLA.</p>
+        </div>
+
+        <div class="doc-section">
+          <h3>2. Customer Due Diligence (CDD) Requirements</h3>
+          <p>Reporting institutions must implement robust CDD procedures as follows:</p>
+          <table class="table-simple">
+            <tr>
+              <th>Customer Tier</th>
+              <th>Transaction Limit</th>
+              <th>CDD Level</th>
+              <th>Verification</th>
+            </tr>
+            <tr><td>Tier 1 (Basic)</td><td>MYR 1,500/day</td><td>Simplified</td><td>MyKad / Passport</td></tr>
+            <tr><td>Tier 2 (Standard)</td><td>MYR 10,000/day</td><td>Standard</td><td>MyKad + Selfie</td></tr>
+            <tr><td>Tier 3 (Enhanced)</td><td>MYR 50,000/day</td><td>Enhanced</td><td>Full EDD</td></tr>
+          </table>
+          <div class="highlight-red">
+            <p style="font-size:11px; color:#fca5a5; line-height:1.6;"><strong>AI Flag:</strong> Current Tier 2 limit of MYR 10,000/day may conflict with BNM Circular JPI/BKL/10/4/1 (Nov 2023) which sets the threshold at MYR 8,000/day for digital payment providers. Requires immediate review and update.</p>
+          </div>
+        </div>
+
+        <div class="doc-section">
+          <h3>3. Enhanced Due Diligence (EDD) Provisions</h3>
+          <p>Enhanced Due Diligence must be applied in the following high-risk scenarios:</p>
+          <p>3.1 Politically Exposed Persons (PEPs) — Malaysian and foreign PEPs must undergo EDD with board-level approval for account opening and transaction monitoring thresholds lowered to MYR 5,000.</p>
+          <div class="highlight-green">
+            <p style="font-size:11px; color:#6ee7b7; line-height:1.6;"><strong>AI Verification:</strong> PEP definition aligns with Financial Action Task Force (FATF) Recommendation 12 and BNM's AML/CFT Policy for PEPs (2022). Clause is compliant.</p>
+          </div>
+          <p>3.2 High-Risk Jurisdictions — Customers or counterparties domiciled in FATF high-risk and other monitored jurisdictions (as listed in Schedule 2 of this Framework) require documentary evidence of the nature and source of funds.</p>
+          <p>3.3 Correspondent Banking — All correspondent banking relationships require BNM pre-notification and documented senior management approval before establishment.</p>
+        </div>
+
+        <div class="doc-section">
+          <h3>4. Transaction Monitoring & STR Reporting</h3>
+          <p>Real-time transaction monitoring systems must be maintained with alert thresholds calibrated to the institution's customer risk profile. Suspicious Transaction Reports (STR) must be submitted to the Financial Intelligence Unit (FIU) of BNM within 3 business days of suspicion arising.</p>
+          <div class="annotation">
+            <p style="font-size:11px; color:#f59e0b; line-height:1.6;">AI Note: FATF Mutual Evaluation of Malaysia (2023) noted deficiencies in STR timeliness. Consider strengthening internal escalation procedures. Recommend adding an internal 24-hour escalation trigger prior to the 3-day BNM deadline.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: AI Analysis Panel -->
+  <div class="ai-panel">
+    <div class="ai-panel-tabs">
+      <div class="ai-tab active">AI Analysis</div>
+      <div class="ai-tab">Regulations</div>
+      <div class="ai-tab">Workflow</div>
+      <div class="ai-tab">History</div>
+    </div>
+    <div class="ai-content">
+      <!-- Compliance Score -->
+      <div class="compliance-score-card">
+        <div class="score-ring">
+          <svg width="90" height="90" viewBox="0 0 90 90">
+            <circle cx="45" cy="45" r="38" fill="none" stroke="#1e2d45" stroke-width="8"/>
+            <circle cx="45" cy="45" r="38" fill="none" stroke="#10b981" stroke-width="8" stroke-dasharray="215" stroke-dashoffset="43" stroke-linecap="round"/>
+          </svg>
+          <div class="score-value">78</div>
+        </div>
+        <div style="font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px;">Compliance Score</div>
+        <div class="score-label">4 issues require attention</div>
+        <div class="score-details">
+          <div class="score-detail-item"><div class="val" style="color:var(--green);">12</div><div class="lbl">Compliant</div></div>
+          <div class="score-detail-item"><div class="val" style="color:var(--red);">2</div><div class="lbl">Critical</div></div>
+          <div class="score-detail-item"><div class="val" style="color:var(--yellow);">2</div><div class="lbl">Warnings</div></div>
+          <div class="score-detail-item"><div class="val" style="color:var(--muted);">3</div><div class="lbl">Info</div></div>
+        </div>
+      </div>
+
+      <!-- Regulation Tags -->
+      <div class="reg-section">
+        <div class="reg-section-title">Regulation References</div>
+        <div class="reg-tag-row">
+          <div class="reg-tag-name"><div class="reg-dot" style="background:#10b981;"></div><span style="font-size:12px;">BNM AMLA 2001</span></div>
+          <span class="reg-status" style="color:var(--green);">Compliant</span>
+        </div>
+        <div class="reg-tag-row">
+          <div class="reg-tag-name"><div class="reg-dot" style="background:#ef4444;"></div><span style="font-size:12px;">BNM Circular Nov 2023</span></div>
+          <span class="reg-status" style="color:var(--red);">Conflict</span>
+        </div>
+        <div class="reg-tag-row">
+          <div class="reg-tag-name"><div class="reg-dot" style="background:#10b981;"></div><span style="font-size:12px;">FSA 2013 S.24</span></div>
+          <span class="reg-status" style="color:var(--green);">Compliant</span>
+        </div>
+        <div class="reg-tag-row">
+          <div class="reg-tag-name"><div class="reg-dot" style="background:#f59e0b;"></div><span style="font-size:12px;">FATF Rec. 12</span></div>
+          <span class="reg-status" style="color:var(--yellow);">Review</span>
+        </div>
+        <div class="reg-tag-row">
+          <div class="reg-tag-name"><div class="reg-dot" style="background:#10b981;"></div><span style="font-size:12px;">PDPA 2010</span></div>
+          <span class="reg-status" style="color:var(--green);">Compliant</span>
+        </div>
+      </div>
+
+      <!-- Issues -->
+      <div class="reg-section">
+        <div class="reg-section-title">AI-Identified Issues</div>
+        <div class="issue-item high">
+          <div class="issue-header">
+            <div class="issue-title">Transaction Limit Conflict</div>
+            <span class="issue-severity high">HIGH</span>
+          </div>
+          <div class="issue-desc">Tier 2 limit MYR 10,000 conflicts with BNM Nov 2023 Circular threshold of MYR 8,000.</div>
+          <div class="issue-clause">Ref: Section 2, Table Row 2 · BNM/RH/JPI 2023</div>
+        </div>
+        <div class="issue-item high">
+          <div class="issue-header">
+            <div class="issue-title">AMLA Cross-Reference Gap</div>
+            <span class="issue-severity high">HIGH</span>
+          </div>
+          <div class="issue-desc">Updated BNM AMLA Guidelines (Dec 2023) not referenced. Clause 3.4 may supersede existing provisions.</div>
+          <div class="issue-clause">Ref: Section 1.2.3 · BNM AMLA Guidelines 2023</div>
+        </div>
+        <div class="issue-item medium">
+          <div class="issue-header">
+            <div class="issue-title">STR Timeliness Procedure</div>
+            <span class="issue-severity medium">MED</span>
+          </div>
+          <div class="issue-desc">Internal escalation procedure for STR should include 24-hour internal trigger per FATF Malaysia 2023 eval.</div>
+          <div class="issue-clause">Ref: Section 4 · FATF MER Malaysia 2023</div>
+        </div>
+        <div class="issue-item low">
+          <div class="issue-header">
+            <div class="issue-title">PEP Definition Update</div>
+            <span class="issue-severity low">LOW</span>
+          </div>
+          <div class="issue-desc">Consider expanding PEP definition to include domestic PEPs per updated FATF guidance.</div>
+          <div class="issue-clause">Ref: Section 3.1 · FATF Rec. 12 (2022)</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="reg-section">
+        <div class="reg-section-title">Quick Actions</div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <button class="btn btn-primary" style="width:100%; font-size:12px; padding:8px;">Generate Compliance Report</button>
+          <button class="btn btn-outline" style="width:100%; font-size:12px; padding:8px;">Send for Legal Review</button>
+          <button class="btn btn-outline" style="width:100%; font-size:12px; padding:8px;">Export Annotations</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Status Bar -->
+<div class="status-bar">
+  <div class="status-item"><div class="status-dot" style="background:var(--green);"></div>AI Engine: Active</div>
+  <div class="status-item"><div class="status-dot" style="background:var(--accent);"></div>BNM Reg DB: v2024.03</div>
+  <div class="status-item"><div class="status-dot" style="background:var(--accent);"></div>SC Reg DB: v2024.03</div>
+  <div class="status-item" style="margin-left:auto;">Last analysis: 14 min ago</div>
+  <div class="status-item">Page 1 of 24</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FXWatch Live Mobile Monitor | MIFCG-AI</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #0d1321; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; padding: 24px; }
+  :root { --bg: #0a0e1a; --surface: #111827; --surface2: #1a2235; --border: #1e2d45; --accent: #38bdf8; --accent2: #3b82f6; --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6; --text: #e2e8f0; --muted: #64748b; }
+
+  .phone-frame { width: 390px; min-height: 844px; background: #0a0e1a; border-radius: 44px; overflow: hidden; box-shadow: 0 0 0 10px #1a1a2e, 0 0 0 12px #222, 0 30px 80px rgba(0,0,0,0.7); position: relative; display: flex; flex-direction: column; }
+  .phone-notch { height: 44px; background: #0a0e1a; display: flex; align-items: center; justify-content: space-between; padding: 12px 24px 0; flex-shrink: 0; }
+  .notch-time { font-size: 15px; font-weight: 700; color: var(--text); }
+  .notch-icons { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--text); }
+  .phone-content { flex: 1; overflow-y: auto; }
+  .phone-content::-webkit-scrollbar { display: none; }
+
+  /* Header */
+  .fx-header { background: linear-gradient(180deg, #0d1f3c 0%, #0a0e1a 100%); padding: 12px 20px 16px; }
+  .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .header-title { font-size: 20px; font-weight: 800; color: var(--text); }
+  .header-sub { font-size: 12px; color: var(--muted); }
+  .live-pill { display: flex; align-items: center; gap: 5px; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 700; color: #ef4444; }
+  .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .refresh-indicator { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .header-actions { display: flex; gap: 8px; }
+  .icon-btn { width: 36px; height: 36px; background: var(--surface2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+
+  /* Rate Ticker */
+  .rate-ticker { background: #090d18; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px 0; overflow: hidden; white-space: nowrap; }
+  .ticker-track { display: inline-flex; gap: 20px; animation: ticker 20s linear infinite; padding: 0 16px; }
+  @keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  .ticker-pair { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .ticker-val { font-size: 11px; color: var(--text); font-family: monospace; }
+  .ticker-chg.up { color: var(--green); font-size: 10px; }
+  .ticker-chg.dn { color: var(--red); font-size: 10px; }
+
+  /* Section */
+  .section-hd { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; }
+  .section-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .section-link { font-size: 12px; color: var(--accent); }
+
+  /* BNM Rate Banner */
+  .bnm-banner { margin: 0 16px 12px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+  .bnm-icon { width: 36px; height: 36px; background: rgba(59,130,246,0.15); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .bnm-info { flex: 1; }
+  .bnm-title { font-size: 11px; font-weight: 700; color: var(--accent); }
+  .bnm-value { font-size: 13px; font-weight: 800; color: var(--text); margin-top: 1px; }
+  .bnm-sub { font-size: 10px; color: var(--muted); }
+  .bnm-compare { text-align: right; }
+  .bnm-spread { font-size: 10px; color: var(--muted); }
+  .bnm-spread-val { font-size: 13px; font-weight: 700; color: var(--yellow); }
+
+  /* Currency Cards */
+  .fx-cards { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .fx-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 14px; }
+  .fx-card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .fx-pair-info { display: flex; align-items: center; gap: 10px; }
+  .flag-stack { display: flex; gap: -4px; }
+  .flag { width: 32px; height: 20px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; }
+  .pair-label { font-size: 16px; font-weight: 800; color: var(--text); }
+  .pair-sub { font-size: 10px; color: var(--muted); }
+  .alert-badge { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 4px 8px; font-size: 10px; font-weight: 700; color: var(--red); }
+  .alert-badge.green { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.3); color: var(--green); }
+  .fx-rate-big { font-size: 28px; font-weight: 900; color: var(--text); letter-spacing: -0.02em; }
+  .fx-change-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+  .fx-chg-badge { display: flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 8px; font-size: 11px; font-weight: 700; }
+  .fx-chg-badge.dn { background: rgba(239,68,68,0.12); color: var(--red); }
+  .fx-chg-badge.up { background: rgba(16,185,129,0.12); color: var(--green); }
+  .fx-sparkline { width: 100%; margin-top: 8px; }
+  .fx-card-footer { display: flex; justify-content: space-between; margin-top: 8px; font-size: 10px; color: var(--muted); }
+  .fx-range { font-size: 10px; color: var(--muted); }
+
+  /* Quick Convert Button */
+  .convert-section { margin: 0 16px 12px; }
+  .convert-btn { width: 100%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border: none; border-radius: 14px; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; font-weight: 700; color: #fff; cursor: pointer; }
+  .convert-icon { font-size: 18px; }
+
+  /* Alert Cards -->
+  .alert-list { padding: 0 16px; display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .alert-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; }
+  .alert-icon-box { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .alert-info { flex: 1; }
+  .alert-pair { font-size: 12px; font-weight: 700; color: var(--text); }
+  .alert-desc { font-size: 10px; color: var(--muted); }
+  .alert-status { font-size: 11px; font-weight: 700; }
+
+  /* Bottom Nav -->
+  .bottom-nav { height: 72px; background: #0d1321; border-top: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-around; padding: 10px 8px 0; flex-shrink: 0; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex: 1; }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; color: var(--muted); font-weight: 500; }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="phone-notch">
+    <div class="notch-time">14:37</div>
+    <div class="notch-icons"><span>●●●●</span><span>5G</span><span>🔋 92%</span></div>
+  </div>
+
+  <div class="phone-content">
+    <!-- Header -->
+    <div class="fx-header">
+      <div class="header-row">
+        <div>
+          <div class="header-title">🌐 FXWatch</div>
+          <div class="header-sub">Malaysia FX Monitor</div>
+        </div>
+        <div class="header-actions">
+          <div class="live-pill"><div class="live-dot"></div>LIVE</div>
+        </div>
+      </div>
+      <div class="refresh-indicator">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--muted);"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        <span>Auto-refresh setiap 30s · Last: 14:37:08</span>
+      </div>
+    </div>
+
+    <!-- Rate Ticker -->
+    <div class="rate-ticker">
+      <div class="ticker-track">
+        <span class="ticker-pair">USD/MYR</span><span class="ticker-val">4.4820</span><span class="ticker-chg dn">▼0.23%</span>
+        <span style="color:#1e2d45;">|</span>
+        <span class="ticker-pair">EUR/MYR</span><span class="ticker-val">4.8650</span><span class="ticker-chg up">▲0.11%</span>
+        <span style="color:#1e2d45;">|</span>
+        <span class="ticker-pair">GBP/MYR</span><span class="ticker-val">5.6720</span><span class="ticker-chg up">▲0.08%</span>
+        <span style="color:#1e2d45;">|</span>
+        <span class="ticker-pair">SGD/MYR</span><span class="ticker-val">3.3210</span><span class="ticker-chg dn">▼0.04%</span>
+        <span style="color:#1e2d45;">|</span>
+        <span class="ticker-pair">JPY/MYR</span><span class="ticker-val">0.02981</span><span class="ticker-chg up">▲0.31%</span>
+        <!-- duplicate for seamless loop -->
+        <span style="color:#1e2d45;">|</span>
+        <span class="ticker-pair">USD/MYR</span><span class="ticker-val">4.4820</span><span class="ticker-chg dn">▼0.23%</span>
+        <span style="color:#1e2d45;">|</span>
+        <span class="ticker-pair">EUR/MYR</span><span class="ticker-val">4.8650</span><span class="ticker-chg up">▲0.11%</span>
+      </div>
+    </div>
+
+    <!-- BNM Reference Rate Banner -->
+    <div class="section-hd"><span class="section-title">BNM Reference Rate</span><span class="section-link">Detail →</span></div>
+    <div class="bnm-banner">
+      <div class="bnm-icon">🏦</div>
+      <div class="bnm-info">
+        <div class="bnm-title">Bank Negara Malaysia — Official Rate</div>
+        <div class="bnm-value">USD/MYR: 4.4710</div>
+        <div class="bnm-sub">Published today · 14:00 MYT</div>
+      </div>
+      <div class="bnm-compare">
+        <div class="bnm-spread">Market Spread</div>
+        <div class="bnm-spread-val">+0.0110</div>
+        <div class="bnm-spread" style="font-size:9px;">vs BNM ref rate</div>
+      </div>
+    </div>
+
+    <!-- Main Currency Cards -->
+    <div class="section-hd"><span class="section-title">Kadar Pertukaran Mata Wang</span><span class="section-link">Filter ⚙</span></div>
+    <div class="fx-cards">
+      <!-- USD/MYR -->
+      <div class="fx-card" style="border-color:rgba(239,68,68,0.3);">
+        <div class="fx-card-top">
+          <div class="fx-pair-info">
+            <span class="flag">🇺🇸</span>
+            <span style="color:var(--muted); font-size:14px;">→</span>
+            <span class="flag">🇲🇾</span>
+            <div>
+              <div class="pair-label">USD / MYR</div>
+              <div class="pair-sub">US Dollar · Malaysian Ringgit</div>
+            </div>
+          </div>
+          <div class="alert-badge">⚠ Near Alert</div>
+        </div>
+        <div class="fx-rate-big">4.4820</div>
+        <div class="fx-change-row">
+          <div class="fx-chg-badge dn">▼ -0.0103 (-0.23%)</div>
+          <span style="font-size:10px; color:var(--muted);">hari ini</span>
+        </div>
+        <div class="fx-sparkline">
+          <svg width="100%" height="40" viewBox="0 0 340 40">
+            <defs><linearGradient id="spU" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444" stop-opacity="0.3"/><stop offset="100%" stop-color="#ef4444" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,28 L30,25 L60,30 L90,22 L120,26 L150,20 L180,24 L210,16 L240,19 L270,14 L300,17 L340,13 L340,40 L0,40Z" fill="url(#spU)"/>
+            <polyline points="0,28 30,25 60,30 90,22 120,26 150,20 180,24 210,16 240,19 270,14 300,17 340,13" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="340" cy="13" r="4" fill="#ef4444"/>
+          </svg>
+        </div>
+        <div class="fx-card-footer">
+          <span>Buka: 4.4923</span>
+          <span class="fx-range">30d: 4.42 – 4.52</span>
+          <span>Alert: 4.50</span>
+        </div>
+      </div>
+
+      <!-- EUR/MYR -->
+      <div class="fx-card">
+        <div class="fx-card-top">
+          <div class="fx-pair-info">
+            <span class="flag">🇪🇺</span>
+            <span style="color:var(--muted); font-size:14px;">→</span>
+            <span class="flag">🇲🇾</span>
+            <div>
+              <div class="pair-label">EUR / MYR</div>
+              <div class="pair-sub">Euro · Malaysian Ringgit</div>
+            </div>
+          </div>
+          <div class="alert-badge green">Active</div>
+        </div>
+        <div class="fx-rate-big">4.8650</div>
+        <div class="fx-change-row">
+          <div class="fx-chg-badge up">▲ +0.0054 (+0.11%)</div>
+          <span style="font-size:10px; color:var(--muted);">hari ini</span>
+        </div>
+        <div class="fx-sparkline">
+          <svg width="100%" height="40" viewBox="0 0 340 40">
+            <defs><linearGradient id="spE" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#10b981" stop-opacity="0.3"/><stop offset="100%" stop-color="#10b981" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0,30 L40,28 L80,25 L120,27 L160,22 L200,19 L240,21 L280,16 L340,14 L340,40 L0,40Z" fill="url(#spE)"/>
+            <polyline points="0,30 40,28 80,25 120,27 160,22 200,19 240,21 280,16 340,14" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="340" cy="14" r="4" fill="#10b981"/>
+          </svg>
+        </div>
+        <div class="fx-card-footer">
+          <span>Buka: 4.8596</span>
+          <span class="fx-range">30d: 4.79 – 4.94</span>
+          <span>Vol: Medium</span>
+        </div>
+      </div>
+
+      <!-- SGD/MYR -->
+      <div class="fx-card">
+        <div class="fx-card-top">
+          <div class="fx-pair-info">
+            <span class="flag">🇸🇬</span>
+            <span style="color:var(--muted); font-size:14px;">→</span>
+            <span class="flag">🇲🇾</span>
+            <div>
+              <div class="pair-label">SGD / MYR</div>
+              <div class="pair-sub">Singapore Dollar · Ringgit</div>
+            </div>
+          </div>
+        </div>
+        <div class="fx-rate-big">3.3210</div>
+        <div class="fx-change-row">
+          <div class="fx-chg-badge dn">▼ -0.0013 (-0.04%)</div>
+          <span style="font-size:10px; color:var(--muted);">hari ini</span>
+        </div>
+        <div class="fx-sparkline">
+          <svg width="100%" height="40" viewBox="0 0 340 40">
+            <polyline points="0,20 60,18 120,22 180,20 240,23 300,24 340,25" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="340" cy="25" r="4" fill="#64748b"/>
+          </svg>
+        </div>
+        <div class="fx-card-footer">
+          <span>Buka: 3.3223</span>
+          <span class="fx-range">30d: 3.29 – 3.36</span>
+          <span>Stable</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Convert -->
+    <div class="convert-section">
+      <div class="convert-btn">
+        <span class="convert-icon">🔄</span>
+        <span>Quick Convert — Tukar Mata Wang</span>
+      </div>
+    </div>
+
+    <!-- Active Alerts -->
+    <div class="section-hd"><span class="section-title">Alert Aktif Anda</span><span class="section-link">Urus Alert</span></div>
+    <div class="alert-list">
+      <div class="alert-item" style="border-color:rgba(239,68,68,0.2);">
+        <div class="alert-icon-box" style="background:rgba(239,68,68,0.12);">🚨</div>
+        <div class="alert-info">
+          <div class="alert-pair">USD/MYR melebihi 4.50</div>
+          <div class="alert-desc">Semasa: 4.4820 · Jarak: 0.0180 · Hampir dicetuskan</div>
+        </div>
+        <div class="alert-status" style="color:var(--yellow);">NEAR</div>
+      </div>
+      <div class="alert-item">
+        <div class="alert-icon-box" style="background:rgba(56,189,248,0.12);">🔔</div>
+        <div class="alert-info">
+          <div class="alert-pair">EUR/MYR di bawah 4.70</div>
+          <div class="alert-desc">Semasa: 4.8650 · Alert aktif · Tiada lagi</div>
+        </div>
+        <div class="alert-status" style="color:var(--muted);">Active</div>
+      </div>
+      <div class="alert-item" style="border-color:rgba(16,185,129,0.2);">
+        <div class="alert-icon-box" style="background:rgba(16,185,129,0.12);">✅</div>
+        <div class="alert-info">
+          <div class="alert-pair">JPY/MYR — Turun di bawah 0.028</div>
+          <div class="alert-desc">Dicetuskan: 23 Mei, 09:42 AM · Semasa: 0.02981</div>
+        </div>
+        <div class="alert-status" style="color:var(--green);">Triggered</div>
+      </div>
+    </div>
+
+    <!-- Rate Table -->
+    <div class="section-hd"><span class="section-title">Kadar Tambahan</span></div>
+    <div style="margin: 0 16px 16px;">
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden;">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; padding:8px 12px; border-bottom:1px solid var(--border); font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase;">
+          <span>Pasangan</span><span style="text-align:right;">Kadar</span><span style="text-align:right;">Perubahan</span><span style="text-align:right;">7D</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; padding:9px 12px; border-bottom:1px solid var(--border); font-size:12px;">
+          <span style="font-weight:600;">GBP/MYR</span><span style="text-align:right;">5.6720</span><span style="text-align:right; color:var(--green);">+0.08%</span><span style="text-align:right; color:var(--green);">+0.3%</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; padding:9px 12px; border-bottom:1px solid var(--border); font-size:12px;">
+          <span style="font-weight:600;">AUD/MYR</span><span style="text-align:right;">2.9340</span><span style="text-align:right; color:var(--red);">-0.15%</span><span style="text-align:right; color:var(--red);">-0.8%</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; padding:9px 12px; border-bottom:1px solid var(--border); font-size:12px;">
+          <span style="font-weight:600;">CNY/MYR</span><span style="text-align:right;">0.6183</span><span style="text-align:right; color:var(--red);">-0.07%</span><span style="text-align:right; color:var(--muted);">+0.1%</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; padding:9px 12px; font-size:12px;">
+          <span style="font-weight:600;">JPY/MYR</span><span style="text-align:right;">0.02981</span><span style="text-align:right; color:var(--green);">+0.31%</span><span style="text-align:right; color:var(--green);">+1.2%</span>
+        </div>
+      </div>
+    </div>
+    <div style="height:80px;"></div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <div class="nav-item active">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label" style="color:var(--accent);">Monitor</span>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🔄</span>
+      <span class="nav-label">Convert</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Alerts</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📈</span>
+      <span class="nav-label">Charts</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Settings</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
