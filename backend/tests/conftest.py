@@ -24,3 +24,19 @@ def _override_auth():
     yield
     app.dependency_overrides.pop(get_current_user, None)
     app.dependency_overrides.pop(require_admin, None)
+
+
+@pytest.fixture
+def real_auth():
+    """
+    Remove the auth override for a single test so it exercises the real
+    get_current_user/require_admin dependencies instead of the stubbed
+    admin user. Restores the override afterwards.
+    """
+    saved_user = app.dependency_overrides.pop(get_current_user, None)
+    saved_admin = app.dependency_overrides.pop(require_admin, None)
+    yield
+    if saved_user is not None:
+        app.dependency_overrides[get_current_user] = saved_user
+    if saved_admin is not None:
+        app.dependency_overrides[require_admin] = saved_admin

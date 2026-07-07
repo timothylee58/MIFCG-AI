@@ -16,7 +16,7 @@ MIFCG-AI is a compliance and financial-intelligence platform for the Malaysian f
 |---|---|---|
 | **RegComply AI** (`/api/regcomply`) | Active | SSE-streaming compliance Q&A over ingested BNM/SC/PDPA/Bursa documents via a LangGraph RAG pipeline (router → retriever → synthesizer), with Redis-cached answers, citations, and a PDF ingestion endpoint that chunks + embeds documents into `pgvector`. |
 | **Survival Pro** (`/api/survival-pro`) | Active | Eligibility checker for Malaysian government aid/subsidy schemes (income, household size, state, disability, etc.) plus an SSE-streaming "spend coach" chat for budgeting advice. |
-| **FXWatch** (`/api/fxwatch`) | Phase 3 — scaffold | Intended to serve cached BNM MYR FX rates, SSE-stream live ticks, and manage rate alerts for 6 MYR pairs. All endpoints currently return `501 Not Implemented`. |
+| **FXWatch** (`/api/fxwatch`) | Active | Monitors the MYR/USD and MYR/SGD corridors: an APScheduler job polls the BNM Open API every 5 minutes (Redis-cached, distributed-lock guarded), and a threshold breach triggers a Claude Haiku narrative delivered to Slack + Telegram simultaneously. `/rates` serves the latest cached snapshot, `/stream` SSE-streams ticks via Redis pub/sub, `/alerts` (admin-only write) configures per-pair thresholds. |
 | **Bursa Risk** (`/api/bursa-risk`) | Phase 3 — scaffold | Intended to score KLCI-listed equities on factors (value, momentum, quality, low-vol, dividend) via an XGBoost model and run a Shariah-aware screener. All endpoints currently return `501 Not Implemented`. |
 
 Each backend router exposes a `GET /api/<module>/` info endpoint reporting its own `status` (`"active"` or `"scaffold"`), which is the source of truth for the table above.
@@ -77,7 +77,12 @@ Apply it against your Supabase project via the Supabase CLI or dashboard SQL edi
 | `ANTHROPIC_API_KEY` | Claude API key used by the RegComply/Survival Pro LLM synthesis steps — console.anthropic.com. |
 | `OPENAI_API_KEY` | OpenAI API key used only for `text-embedding-3-small` document embeddings. |
 | `ALLOWED_ORIGINS` | Comma-separated list of origins allowed by CORS (e.g. local frontend + deployed frontend URL). |
-| `ENVIRONMENT` | `development` / `test` / `production` — gates `/docs` and `/redoc` availability. |
+| `ENVIRONMENT` | `development` / `test` / `production` — gates `/docs`/`/redoc` availability and disables the FXWatch polling scheduler during tests. |
+| `SLACK_WEBHOOK_URL` | Optional. Incoming webhook URL for FXWatch corridor-breach alerts — Slack → App settings → Incoming Webhooks. |
+| `TELEGRAM_BOT_TOKEN` | Optional. Bot token for FXWatch alerts — create via @BotFather on Telegram. |
+| `TELEGRAM_CHAT_ID` | Optional. Chat/channel ID the FXWatch bot posts alerts to. |
+| `FX_ALERT_THRESHOLD_PCT` | Default % move that triggers an FXWatch alert (per-pair overrides can be set via `POST /api/fxwatch/alerts`). Defaults to `0.5`. |
+| `FX_POLL_INTERVAL_MINUTES` | How often FXWatch polls the BNM Open API. Defaults to `5`. |
 
 ### Frontend (`frontend/.env.local.example` → `frontend/.env.local`)
 

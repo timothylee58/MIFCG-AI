@@ -2,25 +2,14 @@ import pytest
 from unittest.mock import MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
-from app.core.auth import get_current_user, require_admin
 from app.main import app
 
 
 # NOTE: the autouse `_override_auth` fixture in conftest.py stubs out
 # get_current_user/require_admin for every test in the suite so business
 # logic tests don't need real JWTs. These tests specifically want to
-# exercise the *real* dependency, so they remove the override for their
-# duration and restore it afterwards.
-
-@pytest.fixture
-def real_auth():
-    saved_user = app.dependency_overrides.pop(get_current_user, None)
-    saved_admin = app.dependency_overrides.pop(require_admin, None)
-    yield
-    if saved_user is not None:
-        app.dependency_overrides[get_current_user] = saved_user
-    if saved_admin is not None:
-        app.dependency_overrides[require_admin] = saved_admin
+# exercise the *real* dependency, so they use the `real_auth` fixture
+# (also in conftest.py) to remove the override for their duration.
 
 
 @pytest.mark.asyncio

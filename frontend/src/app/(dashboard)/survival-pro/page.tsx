@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { authedFetch } from "@/lib/api";
 import { EligibilityForm, EligibilityFormData } from "./components/EligibilityForm";
 import { SchemeCard } from "./components/SchemeCard";
 import { SpendCoach } from "./components/SpendCoach";
@@ -39,7 +40,7 @@ export default function SurvivalProPage() {
     setError(null);
     setProfile(data);
     try {
-      const res = await fetch(`${API_URL}/api/survival-pro/eligibility`, {
+      const res = await authedFetch(`${API_URL}/api/survival-pro/eligibility`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
