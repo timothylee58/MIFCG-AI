@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 from httpx import AsyncClient, ASGITransport
 from app.main import app
 from app.services.survival_pro.eligibility import (

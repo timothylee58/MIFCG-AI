@@ -13,13 +13,14 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName } },
@@ -27,9 +28,15 @@ export default function SignupPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
+    } else if (data.session) {
       router.push("/regcomply");
       router.refresh();
+    } else if (data.user) {
+      // Email confirmation is required — no session yet.
+      setConfirmationSent(true);
+      setLoading(false);
+    } else {
+      setLoading(false);
     }
   }
 
@@ -54,7 +61,13 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-4">
+          {confirmationSent && (
+            <div className="mb-4 px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-sm">
+              Check your email to confirm your account before signing in.
+            </div>
+          )}
+
+          <form onSubmit={handleSignup} className={cn("space-y-4", confirmationSent && "hidden")}>
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">Full name</label>
               <input

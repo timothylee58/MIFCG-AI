@@ -1,8 +1,10 @@
 import json
 import logging
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
+from app.core.auth import get_current_user
+from app.core.limiter import limiter
 from app.services.survival_pro import (
     check_eligibility as run_eligibility,
     EligibilityProfile,
@@ -11,7 +13,11 @@ from app.services.survival_pro.schemes import ALL_SCHEMES
 from app.services.survival_pro.spend_coach import stream_spend_coach
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/survival-pro", tags=["survival-pro"])
+router = APIRouter(
+    prefix="/api/survival-pro",
+    tags=["survival-pro"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 # ─── Request / Response models ──────────────────────────────────────────────
@@ -107,7 +113,8 @@ async def check_eligibility(body: EligibilityRequest):
 
 
 @router.post("/spend-coach")
-async def spend_coach_chat(body: SpendCoachRequest):
+@limiter.limit("20/minute")
+async def spend_coach_chat(request: Request, body: SpendCoachRequest):
     async def event_stream():
         try:
             messages = [{"role": m.role, "content": m.content} for m in body.messages]

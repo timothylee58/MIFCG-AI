@@ -3,14 +3,20 @@ import json
 import logging
 import tempfile
 import os
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
+from app.core.auth import get_current_user, require_admin
+from app.core.limiter import limiter
 from app.core.redis import get_redis
 from app.services.regcomply import rag_graph, ingest_pdf
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/regcomply", tags=["regcomply"])
+router = APIRouter(
+    prefix="/api/regcomply",
+    tags=["regcomply"],
+    dependencies=[Depends(get_current_user)],
+)
 
 CACHE_TTL = 3600  # 1 hour
 VALID_SOURCES = {"BNM", "SC", "PDPA", "BURSA"}
@@ -37,7 +43,8 @@ async def regcomply_info():
 
 
 @router.post("/query")
-async def query_compliance(body: ComplianceQuery):
+@limiter.limit("20/minute")
+async def query_compliance(request: Request, body: ComplianceQuery):
     """
     SSE-streaming compliance query.
 
@@ -138,8 +145,10 @@ async def list_documents(source: str | None = None):
     return {"documents": result.data or []}
 
 
-@router.post("/ingest")
+@router.post("/ingest", dependencies=[Depends(require_admin)])
+@limiter.limit("20/minute")
 async def ingest_document(
+    request: Request,
     file: UploadFile = File(...),
     title: str = Form(...),
     source: str = Form(...),

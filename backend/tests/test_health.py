@@ -22,11 +22,11 @@ async def test_regcomply_stub():
 
 
 @pytest.mark.asyncio
-async def test_fxwatch_stub():
+async def test_fxwatch_active():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         response = await client.get("/api/fxwatch/")
     assert response.status_code == 200
-    assert "USD/MYR" in response.json()["pairs"]
+    assert "MYR/USD" in response.json()["pairs"]
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { authedFetch } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -47,7 +48,7 @@ export function SpendCoach({ monthlyIncome, householdSize, apiUrl }: Props) {
     abortRef.current = new AbortController();
 
     try {
-      const res = await fetch(`${apiUrl}/api/survival-pro/spend-coach`, {
+      const res = await authedFetch(`${apiUrl}/api/survival-pro/spend-coach`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

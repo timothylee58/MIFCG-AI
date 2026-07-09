@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { authedFetch } from "@/lib/api";
 
 export interface Citation {
   label: string;
@@ -43,7 +44,7 @@ export function useSSEStream(apiUrl: string) {
       setState({ ...INITIAL, status: "routing" });
 
       try {
-        const res = await fetch(`${apiUrl}/api/regcomply/query`, {
+        const res = await authedFetch(`${apiUrl}/api/regcomply/query`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ query: q, sources }),

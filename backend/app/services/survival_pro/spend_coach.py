@@ -38,18 +38,21 @@ async def stream_spend_coach(
     Yield raw text chunks from Claude Sonnet for the spend-coach chat.
     `messages` is the full conversation history in Anthropic format.
     """
-    client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+    client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key, timeout=30.0)
 
     system = _SYSTEM_PROMPT + (
         f"\n\nUser profile: monthly take-home RM{monthly_income:,.0f}, "
         f"household size {household_size}."
     )
 
-    async with client.messages.stream(
-        model="claude-sonnet-4-6",
-        max_tokens=1024,
-        system=system,
-        messages=messages,
-    ) as stream:
-        async for text in stream.text_stream:
-            yield text
+    try:
+        async with client.messages.stream(
+            model="claude-sonnet-4-6",
+            max_tokens=1024,
+            system=system,
+            messages=messages,
+        ) as stream:
+            async for text in stream.text_stream:
+                yield text
+    except Exception as exc:
+        raise RuntimeError(f"Spend coach LLM call failed: {exc}") from exc

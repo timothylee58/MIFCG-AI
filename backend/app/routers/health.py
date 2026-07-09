@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 from datetime import datetime, timezone
 
+from app.core.config import settings
+
 router = APIRouter(tags=["health"])
 
 
@@ -33,6 +35,15 @@ async def readiness():
         checks["redis"] = "ok"
     except Exception as exc:
         checks["redis"] = f"error: {exc}"
+
+    try:
+        import anthropic
+        if not settings.anthropic_api_key:
+            raise ValueError("ANTHROPIC_API_KEY is not set")
+        anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        checks["anthropic"] = "ok"
+    except Exception as exc:
+        checks["anthropic"] = f"error: {exc}"
 
     all_ok = all(v == "ok" for v in checks.values())
     return {"status": "ready" if all_ok else "degraded", "checks": checks}
